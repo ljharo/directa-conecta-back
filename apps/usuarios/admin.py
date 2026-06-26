@@ -5,9 +5,9 @@ from .models import PerfilHospital
 
 
 class PerfilHospitalInline(admin.StackedInline):
-    model               = PerfilHospital
-    can_delete          = False
-    verbose_name_plural = 'Hospital asignado'
+    model = PerfilHospital
+    can_delete = False
+    verbose_name_plural = "Hospital asignado"
 
 
 class UserAdmin(BaseUserAdmin):

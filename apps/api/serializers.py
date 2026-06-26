@@ -4,36 +4,36 @@ from apps.centros.models import Edificio
 
 
 class PersonaReportadaSerializer(serializers.ModelSerializer):
-    cedula            = serializers.SerializerMethodField()
-    sexo              = serializers.SerializerMethodField()
-    tipo_sangre       = serializers.SerializerMethodField()
-    estado_actual     = serializers.SerializerMethodField()
-    hospital          = serializers.SerializerMethodField()
+    cedula = serializers.SerializerMethodField()
+    sexo = serializers.SerializerMethodField()
+    tipo_sangre = serializers.SerializerMethodField()
+    estado_actual = serializers.SerializerMethodField()
+    hospital = serializers.SerializerMethodField()
     estado_ultima_ubicacion = serializers.SerializerMethodField()
 
     class Meta:
         model = PersonaReportada
         fields = [
-            'id_caso',
-            'nombre_completo',
-            'alias_o_apodos',
-            'cedula',
-            'edad_aproximada',
-            'sexo',
-            'tipo_sangre',
-            'estado_actual',
-            'caso_sensible',
-            'hospital',
-            'hospital_origen',
-            'estado_ultima_ubicacion',
-            'detalle_ultima_ubicacion',
-            'fecha_ultimo_contacto',
-            'fecha_actualizacion',
+            "id_caso",
+            "nombre_completo",
+            "alias_o_apodos",
+            "cedula",
+            "edad_aproximada",
+            "sexo",
+            "tipo_sangre",
+            "estado_actual",
+            "caso_sensible",
+            "hospital",
+            "hospital_origen",
+            "estado_ultima_ubicacion",
+            "detalle_ultima_ubicacion",
+            "fecha_ultimo_contacto",
+            "fecha_actualizacion",
         ]
 
     def get_cedula(self, obj) -> str | None:
         if obj.cedula:
-            return f'{obj.nacionalidad_cedula}-{obj.cedula}'
+            return f"{obj.nacionalidad_cedula}-{obj.cedula}"
         return None
 
     def get_sexo(self, obj) -> str | None:
@@ -53,29 +53,29 @@ class PersonaReportadaSerializer(serializers.ModelSerializer):
 
 
 class BusquedaResponseSerializer(serializers.Serializer):
-    count       = serializers.IntegerField()
-    page        = serializers.IntegerField()
+    count = serializers.IntegerField()
+    page = serializers.IntegerField()
     total_pages = serializers.IntegerField()
-    next        = serializers.URLField(allow_null=True)
-    previous    = serializers.URLField(allow_null=True)
-    results     = PersonaReportadaSerializer(many=True)
+    next = serializers.URLField(allow_null=True)
+    previous = serializers.URLField(allow_null=True)
+    results = PersonaReportadaSerializer(many=True)
 
 
 class EdificioSerializer(serializers.ModelSerializer):
     estado_estructural = serializers.SerializerMethodField()
-    estado             = serializers.SerializerMethodField()
+    estado = serializers.SerializerMethodField()
 
     class Meta:
-        model  = Edificio
+        model = Edificio
         fields = [
-            'id',
-            'nombre',
-            'estado',
-            'ciudad',
-            'direccion',
-            'estado_estructural',
-            'notas',
-            'fecha_registro',
+            "id",
+            "nombre",
+            "estado",
+            "ciudad",
+            "direccion",
+            "estado_estructural",
+            "notas",
+            "fecha_registro",
         ]
 
     def get_estado_estructural(self, obj) -> str:
@@ -86,9 +86,9 @@ class EdificioSerializer(serializers.ModelSerializer):
 
 
 class EdificiosResponseSerializer(serializers.Serializer):
-    count       = serializers.IntegerField()
-    page        = serializers.IntegerField()
+    count = serializers.IntegerField()
+    page = serializers.IntegerField()
     total_pages = serializers.IntegerField()
-    next        = serializers.URLField(allow_null=True)
-    previous    = serializers.URLField(allow_null=True)
-    results     = EdificioSerializer(many=True)
+    next = serializers.URLField(allow_null=True)
+    previous = serializers.URLField(allow_null=True)
+    results = EdificioSerializer(many=True)

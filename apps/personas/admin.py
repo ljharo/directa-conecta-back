@@ -9,49 +9,57 @@ import datetime
 
 from .models import PersonaReportada, FuenteActualizacion
 from .choices import (
-    EstadoPaciente, EstadoVenezolano, NacionalidadCedula,
-    Sexo, TipoSangre, FuenteInformacion,
+    EstadoPaciente,
+    EstadoVenezolano,
+    NacionalidadCedula,
+    Sexo,
+    TipoSangre,
+    FuenteInformacion,
 )
 from apps.centros.models import Hospital
 
 CAMPOS_SOLO_ADMIN = (
-    'fuente_informacion', 'detalle_fuente', 'fecha_fuente',
-    'validado_por', 'caso_sensible', 'notas_internas',
+    "fuente_informacion",
+    "detalle_fuente",
+    "fecha_fuente",
+    "validado_por",
+    "caso_sensible",
+    "notas_internas",
 )
 
 COLUMNAS_PERSONA = [
-    {'nombre': 'nombre_completo',          'requerido': True,  'ejemplo': 'Juan Pérez'},
-    {'nombre': 'cedula',                   'requerido': False, 'ejemplo': '12345678'},
-    {'nombre': 'nacionalidad_cedula',      'requerido': False, 'ejemplo': 'V'},
-    {'nombre': 'alias_o_apodos',           'requerido': False, 'ejemplo': 'Juanito'},
-    {'nombre': 'edad_aproximada',          'requerido': False, 'ejemplo': '35'},
-    {'nombre': 'sexo',                     'requerido': False, 'ejemplo': 'M'},
-    {'nombre': 'tipo_sangre',              'requerido': False, 'ejemplo': 'O+'},
-    {'nombre': 'estado_ultima_ubicacion',  'requerido': False, 'ejemplo': 'miranda'},
-    {'nombre': 'detalle_ultima_ubicacion', 'requerido': False, 'ejemplo': 'El Valle'},
-    {'nombre': 'fecha_ultimo_contacto',    'requerido': True,  'ejemplo': '2026-06-26'},
-    {'nombre': 'hospital_codigo',          'requerido': True,  'ejemplo': 'HV'},
-    {'nombre': 'estado_actual',            'requerido': False, 'ejemplo': 'hospitalizado'},
-    {'nombre': 'hospital_origen',          'requerido': False, 'ejemplo': 'Hospital Militar'},
-    {'nombre': 'fuente_informacion',       'requerido': False, 'ejemplo': 'hospital'},
-    {'nombre': 'detalle_fuente',           'requerido': False, 'ejemplo': ''},
-    {'nombre': 'validado_por',             'requerido': False, 'ejemplo': 'Operador01'},
-    {'nombre': 'notas_internas',           'requerido': False, 'ejemplo': ''},
+    {"nombre": "nombre_completo", "requerido": True, "ejemplo": "Juan Pérez"},
+    {"nombre": "cedula", "requerido": False, "ejemplo": "12345678"},
+    {"nombre": "nacionalidad_cedula", "requerido": False, "ejemplo": "V"},
+    {"nombre": "alias_o_apodos", "requerido": False, "ejemplo": "Juanito"},
+    {"nombre": "edad_aproximada", "requerido": False, "ejemplo": "35"},
+    {"nombre": "sexo", "requerido": False, "ejemplo": "M"},
+    {"nombre": "tipo_sangre", "requerido": False, "ejemplo": "O+"},
+    {"nombre": "estado_ultima_ubicacion", "requerido": False, "ejemplo": "miranda"},
+    {"nombre": "detalle_ultima_ubicacion", "requerido": False, "ejemplo": "El Valle"},
+    {"nombre": "fecha_ultimo_contacto", "requerido": True, "ejemplo": "2026-06-26"},
+    {"nombre": "hospital_codigo", "requerido": True, "ejemplo": "HV"},
+    {"nombre": "estado_actual", "requerido": False, "ejemplo": "hospitalizado"},
+    {"nombre": "hospital_origen", "requerido": False, "ejemplo": "Hospital Militar"},
+    {"nombre": "fuente_informacion", "requerido": False, "ejemplo": "hospital"},
+    {"nombre": "detalle_fuente", "requerido": False, "ejemplo": ""},
+    {"nombre": "validado_por", "requerido": False, "ejemplo": "Operador01"},
+    {"nombre": "notas_internas", "requerido": False, "ejemplo": ""},
 ]
 
-ESTADOS_VALIDOS     = {c[0] for c in EstadoVenezolano.choices}
+ESTADOS_VALIDOS = {c[0] for c in EstadoVenezolano.choices}
 ESTADOS_PAC_VALIDOS = {c[0] for c in EstadoPaciente.choices}
-NAC_VALIDAS         = {c[0] for c in NacionalidadCedula.choices}
-SEXO_VALIDOS        = {c[0] for c in Sexo.choices}
-SANGRE_VALIDOS      = {c[0] for c in TipoSangre.choices}
-FUENTE_VALIDOS      = {c[0] for c in FuenteInformacion.choices}
+NAC_VALIDAS = {c[0] for c in NacionalidadCedula.choices}
+SEXO_VALIDOS = {c[0] for c in Sexo.choices}
+SANGRE_VALIDOS = {c[0] for c in TipoSangre.choices}
+FUENTE_VALIDOS = {c[0] for c in FuenteInformacion.choices}
 
 
 def _parse_fecha(valor):
     if isinstance(valor, (datetime.date, datetime.datetime)):
         return valor if isinstance(valor, datetime.date) else valor.date()
     if valor:
-        for fmt in ('%Y-%m-%d', '%d/%m/%Y', '%d-%m-%Y'):
+        for fmt in ("%Y-%m-%d", "%d/%m/%Y", "%d-%m-%Y"):
             try:
                 return datetime.datetime.strptime(str(valor).strip(), fmt).date()
             except ValueError:
@@ -60,10 +68,17 @@ def _parse_fecha(valor):
 
 
 class FuenteActualizacionInline(admin.TabularInline):
-    model           = FuenteActualizacion
-    extra           = 0
-    readonly_fields = ('estado_anterior', 'estado_nuevo', 'fuente', 'detalle', 'fecha', 'registrado_por')
-    can_delete      = False
+    model = FuenteActualizacion
+    extra = 0
+    readonly_fields = (
+        "estado_anterior",
+        "estado_nuevo",
+        "fuente",
+        "detalle",
+        "fecha",
+        "registrado_por",
+    )
+    can_delete = False
 
     def has_add_permission(self, request, obj=None):
         return False
@@ -71,56 +86,106 @@ class FuenteActualizacionInline(admin.TabularInline):
 
 @admin.register(PersonaReportada)
 class PersonaReportadaAdmin(admin.ModelAdmin):
-    list_display         = ('id_caso', 'nombre_completo', 'cedula_display',
-                            'estado_badge', 'hospital', 'estado_ultima_ubicacion',
-                            'caso_sensible', 'fecha_actualizacion')
-    list_filter          = ('estado_actual', 'hospital', 'estado_ultima_ubicacion',
-                            'caso_sensible', 'sexo', 'fuente_informacion')
-    search_fields        = ('nombre_completo', 'alias_o_apodos', 'id_caso', 'cedula')
-    readonly_fields      = ('id_caso', 'fecha_actualizacion')
-    inlines              = [FuenteActualizacionInline]
-    actions              = ['exportar_csv']
-    change_list_template = 'admin/personas/personareportada/change_list.html'
+    list_display = (
+        "id_caso",
+        "nombre_completo",
+        "cedula_display",
+        "estado_badge",
+        "hospital",
+        "estado_ultima_ubicacion",
+        "caso_sensible",
+        "fecha_actualizacion",
+    )
+    list_filter = (
+        "estado_actual",
+        "hospital",
+        "estado_ultima_ubicacion",
+        "caso_sensible",
+        "sexo",
+        "fuente_informacion",
+    )
+    search_fields = ("nombre_completo", "alias_o_apodos", "id_caso", "cedula")
+    readonly_fields = ("id_caso", "fecha_actualizacion")
+    inlines = [FuenteActualizacionInline]
+    actions = ["exportar_csv"]
+    change_list_template = "admin/personas/personareportada/change_list.html"
 
     fieldsets = (
-        ('Identificación', {
-            'fields': ('id_caso', 'nombre_completo', 'alias_o_apodos',
-                       'nacionalidad_cedula', 'cedula', 'edad_aproximada',
-                       'sexo', 'tipo_sangre')
-        }),
-        ('Ubicación', {
-            'fields': ('estado_ultima_ubicacion', 'detalle_ultima_ubicacion',
-                       'fecha_ultimo_contacto')
-        }),
-        ('Estado clínico', {
-            'fields': ('hospital', 'estado_actual', 'hospital_origen')
-        }),
-        ('Gestión interna', {
-            'classes': ('collapse',),
-            'fields': ('fuente_informacion', 'detalle_fuente', 'fecha_fuente',
-                       'validado_por', 'caso_sensible', 'notas_internas',
-                       'fecha_actualizacion')
-        }),
+        (
+            "Identificación",
+            {
+                "fields": (
+                    "id_caso",
+                    "nombre_completo",
+                    "alias_o_apodos",
+                    "nacionalidad_cedula",
+                    "cedula",
+                    "edad_aproximada",
+                    "sexo",
+                    "tipo_sangre",
+                )
+            },
+        ),
+        (
+            "Ubicación",
+            {
+                "fields": (
+                    "estado_ultima_ubicacion",
+                    "detalle_ultima_ubicacion",
+                    "fecha_ultimo_contacto",
+                )
+            },
+        ),
+        (
+            "Estado clínico",
+            {"fields": ("hospital", "estado_actual", "hospital_origen")},
+        ),
+        (
+            "Gestión interna",
+            {
+                "classes": ("collapse",),
+                "fields": (
+                    "fuente_informacion",
+                    "detalle_fuente",
+                    "fecha_fuente",
+                    "validado_por",
+                    "caso_sensible",
+                    "notas_internas",
+                    "fecha_actualizacion",
+                ),
+            },
+        ),
     )
 
     def get_urls(self):
         urls = super().get_urls()
         return [
-            path('importar/',        self.admin_site.admin_view(self.importar_view),  name='personas_personareportada_importar'),
-            path('plantilla-excel/', self.admin_site.admin_view(self.plantilla_view), name='personas_personareportada_plantilla'),
+            path(
+                "importar/",
+                self.admin_site.admin_view(self.importar_view),
+                name="personas_personareportada_importar",
+            ),
+            path(
+                "plantilla-excel/",
+                self.admin_site.admin_view(self.plantilla_view),
+                name="personas_personareportada_plantilla",
+            ),
         ] + urls
 
     def plantilla_view(self, request):
         wb = openpyxl.Workbook()
         ws = wb.active
-        ws.title = 'Personas'
-        ws.append([c['nombre'] for c in COLUMNAS_PERSONA])
-        ws.append([c['ejemplo'] for c in COLUMNAS_PERSONA])
+        ws.title = "Personas"
+        ws.append([c["nombre"] for c in COLUMNAS_PERSONA])
+        ws.append([c["ejemplo"] for c in COLUMNAS_PERSONA])
         buf = BytesIO()
         wb.save(buf)
         buf.seek(0)
-        response = HttpResponse(buf, content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
-        response['Content-Disposition'] = 'attachment; filename="plantilla_personas.xlsx"'
+        response = HttpResponse(
+            buf,
+            content_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        )
+        response["Content-Disposition"] = 'attachment; filename="plantilla_personas.xlsx"'
         return response
 
     def importar_view(self, request):
@@ -133,30 +198,35 @@ class PersonaReportadaAdmin(admin.ModelAdmin):
 
         ctx = {
             **self.admin_site.each_context(request),
-            'titulo':        'Personas Reportadas',
-            'columnas':      COLUMNAS_PERSONA,
-            'url_plantilla': '../plantilla-excel/',
-            'creados':       None,
-            'errores':       [],
+            "titulo": "Personas Reportadas",
+            "columnas": COLUMNAS_PERSONA,
+            "url_plantilla": "../plantilla-excel/",
+            "creados": None,
+            "errores": [],
         }
 
-        if request.method == 'POST':
-            archivo = request.FILES.get('excel_file')
+        if request.method == "POST":
+            archivo = request.FILES.get("excel_file")
             if not archivo:
-                ctx['errores'] = ['No se seleccionó ningún archivo.']
-                return render(request, 'admin/import_excel.html', ctx)
+                ctx["errores"] = ["No se seleccionó ningún archivo."]
+                return render(request, "admin/import_excel.html", ctx)
 
             try:
                 wb = openpyxl.load_workbook(archivo, data_only=True)
                 ws = wb.active
             except Exception:
-                ctx['errores'] = ['El archivo no es un Excel válido (.xlsx).']
-                return render(request, 'admin/import_excel.html', ctx)
+                ctx["errores"] = ["El archivo no es un Excel válido (.xlsx)."]
+                return render(request, "admin/import_excel.html", ctx)
 
             def _col(val):
-                return str(val or '').strip().rstrip('*').strip()
+                return str(val or "").strip().rstrip("*").strip()
 
-            COLS_CONOCIDAS = {'nombre_completo', 'cedula', 'hospital_codigo', 'fecha_ultimo_contacto'}
+            COLS_CONOCIDAS = {
+                "nombre_completo",
+                "cedula",
+                "hospital_codigo",
+                "fecha_ultimo_contacto",
+            }
             fila_enc = 1
             for ri in range(1, 6):
                 vals = {_col(c.value).lower() for c in ws[ri] if c.value}
@@ -166,17 +236,19 @@ class PersonaReportadaAdmin(admin.ModelAdmin):
             encabezado = [_col(c.value) for c in ws[fila_enc]]
             errores, creados = [], 0
 
-            for i, fila in enumerate(ws.iter_rows(min_row=fila_enc + 1, values_only=True), start=fila_enc + 1):
+            for i, fila in enumerate(
+                ws.iter_rows(min_row=fila_enc + 1, values_only=True), start=fila_enc + 1
+            ):
                 if not any(fila):
                     continue
                 row = dict(zip(encabezado, fila))
 
-                nombre = str(row.get('nombre_completo', '') or '').strip()
+                nombre = str(row.get("nombre_completo", "") or "").strip()
                 if not nombre:
                     errores.append(f'Fila {i}: "nombre_completo" es obligatorio.')
                     continue
 
-                fecha = _parse_fecha(row.get('fecha_ultimo_contacto'))
+                fecha = _parse_fecha(row.get("fecha_ultimo_contacto"))
                 if not fecha:
                     errores.append(f'Fila {i}: "fecha_ultimo_contacto" inválida. Use YYYY-MM-DD.')
                     continue
@@ -184,7 +256,7 @@ class PersonaReportadaAdmin(admin.ModelAdmin):
                 if hospital_forzado:
                     hospital = hospital_forzado
                 else:
-                    codigo_h = str(row.get('hospital_codigo', '') or '').strip().upper()
+                    codigo_h = str(row.get("hospital_codigo", "") or "").strip().upper()
                     if not codigo_h:
                         errores.append(f'Fila {i}: "hospital_codigo" es obligatorio.')
                         continue
@@ -194,15 +266,19 @@ class PersonaReportadaAdmin(admin.ModelAdmin):
                         errores.append(f'Fila {i}: hospital con código "{codigo_h}" no existe.')
                         continue
 
-                nac      = str(row.get('nacionalidad_cedula', '') or '').strip()
-                sexo     = str(row.get('sexo', '') or '').strip()
-                sangre   = str(row.get('tipo_sangre', '') or '').strip()
-                ub_est   = str(row.get('estado_ultima_ubicacion', '') or '').strip()
-                estado_p = str(row.get('estado_actual', '') or '').strip() or EstadoPaciente.REPORTADO
-                fuente   = str(row.get('fuente_informacion', '') or '').strip()
+                nac = str(row.get("nacionalidad_cedula", "") or "").strip()
+                sexo = str(row.get("sexo", "") or "").strip()
+                sangre = str(row.get("tipo_sangre", "") or "").strip()
+                ub_est = str(row.get("estado_ultima_ubicacion", "") or "").strip()
+                estado_p = (
+                    str(row.get("estado_actual", "") or "").strip() or EstadoPaciente.REPORTADO
+                )
+                fuente = str(row.get("fuente_informacion", "") or "").strip()
 
                 if nac and nac not in NAC_VALIDAS:
-                    errores.append(f'Fila {i}: nacionalidad_cedula "{nac}" inválida (use V, E o P).')
+                    errores.append(
+                        f'Fila {i}: nacionalidad_cedula "{nac}" inválida (use V, E o P).'
+                    )
                     continue
                 if sexo and sexo not in SEXO_VALIDOS:
                     errores.append(f'Fila {i}: sexo "{sexo}" inválido.')
@@ -220,40 +296,43 @@ class PersonaReportadaAdmin(admin.ModelAdmin):
                     errores.append(f'Fila {i}: fuente_informacion "{fuente}" inválido.')
                     continue
 
-                edad = row.get('edad_aproximada')
+                edad = row.get("edad_aproximada")
                 try:
-                    edad = int(edad) if edad not in (None, '') else None
+                    edad = int(edad) if edad not in (None, "") else None
                 except (ValueError, TypeError):
                     edad = None
 
                 try:
                     PersonaReportada.objects.create(
-                        nombre_completo          = nombre,
-                        cedula                   = str(row.get('cedula', '') or '').strip(),
-                        nacionalidad_cedula      = nac,
-                        alias_o_apodos           = str(row.get('alias_o_apodos', '') or '').strip(),
-                        edad_aproximada          = edad,
-                        sexo                     = sexo,
-                        tipo_sangre              = sangre,
-                        estado_ultima_ubicacion  = ub_est,
-                        detalle_ultima_ubicacion = str(row.get('detalle_ultima_ubicacion', '') or '').strip(),
-                        fecha_ultimo_contacto    = fecha,
-                        hospital                 = hospital,
-                        estado_actual            = estado_p,
-                        hospital_origen          = str(row.get('hospital_origen', '') or '').strip(),
-                        fuente_informacion       = fuente or 'hospital',
-                        detalle_fuente           = str(row.get('detalle_fuente', '') or '').strip(),
-                        validado_por             = str(row.get('validado_por', '') or '').strip() or request.user.username,
-                        notas_internas           = str(row.get('notas_internas', '') or '').strip(),
+                        nombre_completo=nombre,
+                        cedula=str(row.get("cedula", "") or "").strip(),
+                        nacionalidad_cedula=nac,
+                        alias_o_apodos=str(row.get("alias_o_apodos", "") or "").strip(),
+                        edad_aproximada=edad,
+                        sexo=sexo,
+                        tipo_sangre=sangre,
+                        estado_ultima_ubicacion=ub_est,
+                        detalle_ultima_ubicacion=str(
+                            row.get("detalle_ultima_ubicacion", "") or ""
+                        ).strip(),
+                        fecha_ultimo_contacto=fecha,
+                        hospital=hospital,
+                        estado_actual=estado_p,
+                        hospital_origen=str(row.get("hospital_origen", "") or "").strip(),
+                        fuente_informacion=fuente or "hospital",
+                        detalle_fuente=str(row.get("detalle_fuente", "") or "").strip(),
+                        validado_por=str(row.get("validado_por", "") or "").strip()
+                        or request.user.username,
+                        notas_internas=str(row.get("notas_internas", "") or "").strip(),
                     )
                     creados += 1
                 except Exception as e:
-                    errores.append(f'Fila {i}: {e}')
+                    errores.append(f"Fila {i}: {e}")
 
-            ctx['creados'] = creados
-            ctx['errores'] = errores
+            ctx["creados"] = creados
+            ctx["errores"] = errores
 
-        return render(request, 'admin/import_excel.html', ctx)
+        return render(request, "admin/import_excel.html", ctx)
 
     # ---- Queryset / permisos ----
 
@@ -274,10 +353,10 @@ class PersonaReportadaAdmin(admin.ModelAdmin):
 
     def get_form(self, request, obj=None, **kwargs):
         form = super().get_form(request, obj, **kwargs)
-        if not request.user.is_superuser and 'hospital' in form.base_fields:
-            form.base_fields['hospital'].disabled = True
-        if not request.user.is_superuser and 'estado_actual' in form.base_fields:
-            form.base_fields['estado_actual'].choices = [
+        if not request.user.is_superuser and "hospital" in form.base_fields:
+            form.base_fields["hospital"].disabled = True
+        if not request.user.is_superuser and "estado_actual" in form.base_fields:
+            form.base_fields["estado_actual"].choices = [
                 c for c in EstadoPaciente.choices if c[0] != EstadoPaciente.FALLECIDO
             ]
         return form
@@ -288,76 +367,104 @@ class PersonaReportadaAdmin(admin.ModelAdmin):
                 obj.hospital = request.user.perfilhospital.hospital
             except Exception:
                 pass
-        if change and 'estado_actual' in form.changed_data:
+        if change and "estado_actual" in form.changed_data:
             estado_anterior = PersonaReportada.objects.get(pk=obj.pk).estado_actual
             super().save_model(request, obj, form, change)
             FuenteActualizacion.objects.create(
-                persona         = obj,
-                estado_anterior = estado_anterior,
-                estado_nuevo    = obj.estado_actual,
-                fuente          = 'hospital',
-                registrado_por  = request.user.get_full_name() or request.user.username,
+                persona=obj,
+                estado_anterior=estado_anterior,
+                estado_nuevo=obj.estado_actual,
+                fuente="hospital",
+                registrado_por=request.user.get_full_name() or request.user.username,
             )
         else:
             super().save_model(request, obj, form, change)
 
     # ---- Columnas visuales ----
 
-    @admin.display(description='Cédula')
+    @admin.display(description="Cédula")
     def cedula_display(self, obj):
         if obj.cedula:
-            return f'{obj.nacionalidad_cedula}-{obj.cedula}'
-        return '—'
+            return f"{obj.nacionalidad_cedula}-{obj.cedula}"
+        return "—"
 
-    @admin.display(description='Estado')
+    @admin.display(description="Estado")
     def estado_badge(self, obj):
         colores = {
-            'fallecido':             '#dc2626',
-            'hospitalizado_critico': '#ea580c',
-            'hospitalizado':         '#2563eb',
-            'en_traslado':           '#7c3aed',
-            'localizado_con_vida':   '#16a34a',
-            'dado_de_alta':          '#15803d',
-            'en_centro_acopio':      '#0891b2',
-            'reportado':             '#ca8a04',
-            'sin_informacion':       '#6b7280',
-            'no_confirmado':         '#9ca3af',
+            "fallecido": "#dc2626",
+            "hospitalizado_critico": "#ea580c",
+            "hospitalizado": "#2563eb",
+            "en_traslado": "#7c3aed",
+            "localizado_con_vida": "#16a34a",
+            "dado_de_alta": "#15803d",
+            "en_centro_acopio": "#0891b2",
+            "reportado": "#ca8a04",
+            "sin_informacion": "#6b7280",
+            "no_confirmado": "#9ca3af",
         }
-        color = colores.get(obj.estado_actual, '#6b7280')
+        color = colores.get(obj.estado_actual, "#6b7280")
         label = obj.get_estado_actual_display()
         return format_html(
             '<span style="background:{};color:white;padding:2px 8px;'
             'border-radius:4px;font-size:11px;font-weight:bold">{}</span>',
-            color, label,
+            color,
+            label,
         )
 
     # ---- Acciones ----
 
-    @admin.action(description='Exportar selección a CSV')
+    @admin.action(description="Exportar selección a CSV")
     def exportar_csv(self, request, queryset):
         import csv
-        response = HttpResponse(content_type='text/csv')
-        response['Content-Disposition'] = 'attachment; filename="personas_reportadas.csv"'
+
+        response = HttpResponse(content_type="text/csv")
+        response["Content-Disposition"] = 'attachment; filename="personas_reportadas.csv"'
         writer = csv.writer(response)
-        writer.writerow(['id_caso', 'nombre_completo', 'cedula', 'estado_actual',
-                         'hospital', 'estado_ultima_ubicacion', 'fecha_actualizacion'])
+        writer.writerow(
+            [
+                "id_caso",
+                "nombre_completo",
+                "cedula",
+                "estado_actual",
+                "hospital",
+                "estado_ultima_ubicacion",
+                "fecha_actualizacion",
+            ]
+        )
         for p in queryset:
-            writer.writerow([
-                p.id_caso,
-                p.nombre_completo,
-                f'{p.nacionalidad_cedula}-{p.cedula}' if p.cedula else '',
-                p.estado_actual,
-                str(p.hospital),
-                p.estado_ultima_ubicacion,
-                p.fecha_actualizacion,
-            ])
+            writer.writerow(
+                [
+                    p.id_caso,
+                    p.nombre_completo,
+                    f"{p.nacionalidad_cedula}-{p.cedula}" if p.cedula else "",
+                    p.estado_actual,
+                    str(p.hospital),
+                    p.estado_ultima_ubicacion,
+                    p.fecha_actualizacion,
+                ]
+            )
         return response
 
 
 @admin.register(FuenteActualizacion)
 class FuenteActualizacionAdmin(admin.ModelAdmin):
-    list_display    = ('persona', 'estado_anterior', 'estado_nuevo', 'fuente', 'fecha', 'registrado_por')
-    readonly_fields = ('persona', 'estado_anterior', 'estado_nuevo', 'fuente', 'detalle', 'fecha', 'registrado_por')
+    list_display = (
+        "persona",
+        "estado_anterior",
+        "estado_nuevo",
+        "fuente",
+        "fecha",
+        "registrado_por",
+    )
+    readonly_fields = (
+        "persona",
+        "estado_anterior",
+        "estado_nuevo",
+        "fuente",
+        "detalle",
+        "fecha",
+        "registrado_por",
+    )
 
     def has_add_permission(self, request):
         return False
