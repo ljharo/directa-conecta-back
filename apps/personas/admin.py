@@ -28,42 +28,13 @@ COLUMNAS_PERSONA = [
     {"nombre": "hospital_codigo", "requerido": False, "ejemplo": "HV"},
 ]
 
-import unicodedata
-
-
-def _norm(s):
-    s = unicodedata.normalize("NFKD", str(s or "").strip().lower())
-    return "".join(c for c in s if not unicodedata.combining(c))
-
-
-def _build_map(choices_class):
-    """Devuelve dict normalizado → valor interno, aceptando valor Y label."""
-    m = {}
-    for value, label in choices_class.choices:
-        m[_norm(value)] = value
-        m[_norm(label)] = value
-    return m
-
+from apps.api.utils import _build_map, _resolve
 
 _MAP_ESTADO_VEN = _build_map(EstadoVenezolano)
 _MAP_ESTADO_PAC = _build_map(EstadoPaciente)
 _MAP_NAC = _build_map(NacionalidadCedula)
 _MAP_SEXO = _build_map(Sexo)
 _MAP_SANGRE = _build_map(TipoSangre)
-
-
-def _resolve(raw, mapping):
-    """Resuelve raw al valor interno del choice o devuelve None si no existe."""
-    if not raw:
-        return ""
-    key = _norm(raw)
-    if key in mapping:
-        return mapping[key]
-    # Coincidencia parcial: "La Guaira" → "La Guaira (Vargas)"
-    for norm_key, value in mapping.items():
-        if norm_key.startswith(key) or key.startswith(norm_key):
-            return value
-    return None
 
 
 def _parse_fecha(valor):
