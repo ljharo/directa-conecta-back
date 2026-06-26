@@ -1,0 +1,74 @@
+{% extends "admin/base_site.html" %}
+{% load i18n %}
+
+{% block title %}Importar desde Excel — {{ titulo }}{% endblock %}
+
+{% block content %}
+<h1>Importar {{ titulo }} desde Excel</h1>
+
+{% if errores or creados is not None %}
+<div style="margin: 16px 0;">
+  {% if creados is not None %}
+  <p style="color:#16a34a;font-weight:bold">
+    ✓ {{ creados }} registro(s) importado(s) correctamente.
+  </p>
+  {% endif %}
+  {% if errores %}
+  <p style="color:#dc2626;font-weight:bold">Se encontraron {{ errores|length }} error(es):</p>
+  <ul style="color:#dc2626">
+    {% for e in errores %}<li>{{ e }}</li>{% endfor %}
+  </ul>
+  {% endif %}
+</div>
+{% endif %}
+
+<div style="background:#f9fafb;border:1px solid #e5e7eb;border-radius:8px;padding:24px;max-width:600px;">
+  <form method="post" enctype="multipart/form-data">
+    {% csrf_token %}
+    <div style="margin-bottom:16px;">
+      <label style="display:block;font-weight:bold;margin-bottom:8px;">
+        Archivo Excel (.xlsx)
+      </label>
+      <input type="file" name="excel_file" accept=".xlsx" required
+             style="width:100%;padding:8px;border:1px solid #d1d5db;border-radius:4px;">
+    </div>
+    <button type="submit"
+            style="background:#2563eb;color:white;padding:10px 20px;border:none;border-radius:4px;cursor:pointer;font-size:14px;">
+      Importar
+    </button>
+    <a href=".." style="margin-left:16px;color:#6b7280;">Cancelar</a>
+  </form>
+</div>
+
+<div style="margin-top:32px;">
+  <h2 style="font-size:16px;">Estructura requerida del Excel</h2>
+  <p style="color:#6b7280;font-size:13px;">La primera fila debe ser el encabezado con exactamente estos nombres de columna:</p>
+  <div style="overflow-x:auto;">
+    <table style="border-collapse:collapse;font-size:13px;width:100%;">
+      <thead>
+        <tr style="background:#f3f4f6;">
+          {% for col in columnas %}
+          <th style="border:1px solid #e5e7eb;padding:6px 10px;text-align:left;white-space:nowrap;">
+            {{ col.nombre }}
+            {% if col.requerido %}<span style="color:#dc2626">*</span>{% endif %}
+          </th>
+          {% endfor %}
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          {% for col in columnas %}
+          <td style="border:1px solid #e5e7eb;padding:6px 10px;color:#6b7280;font-size:12px;white-space:nowrap;">
+            {{ col.ejemplo }}
+          </td>
+          {% endfor %}
+        </tr>
+      </tbody>
+    </table>
+  </div>
+  <p style="color:#6b7280;font-size:12px;margin-top:8px;"><span style="color:#dc2626">*</span> Campos obligatorios</p>
+  <a href="{{ url_plantilla }}" style="font-size:13px;color:#2563eb;">
+    Descargar plantilla vacía (.xlsx)
+  </a>
+</div>
+{% endblock %}

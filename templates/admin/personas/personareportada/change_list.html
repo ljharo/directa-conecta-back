@@ -1,0 +1,14 @@
+{% extends "admin/change_list.html" %}
+{% block object-tools-items %}
+    <li>
+        <a href="importar/" class="button" style="background:#16a34a;">
+            Importar desde Excel
+        </a>
+    </li>
+    <li>
+        <a href="plantilla-excel/" class="button" style="background:#0891b2;">
+            Descargar plantilla
+        </a>
+    </li>
+    {{ block.super }}
+{% endblock %}
