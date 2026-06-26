@@ -7,44 +7,25 @@ from io import BytesIO
 import openpyxl
 import datetime
 
-from .models import PersonaReportada, FuenteActualizacion
-from .choices import (
-    EstadoPaciente,
-    EstadoVenezolano,
-    NacionalidadCedula,
-    Sexo,
-    TipoSangre,
-    FuenteInformacion,
-)
+from .models import PersonaReportada, ActualizacionEstado
+from .choices import EstadoPaciente, EstadoVenezolano, NacionalidadCedula, Sexo, TipoSangre
 from apps.centros.models import Hospital
 
-CAMPOS_SOLO_ADMIN = (
-    "fuente_informacion",
-    "detalle_fuente",
-    "fecha_fuente",
-    "validado_por",
-    "caso_sensible",
-    "notas_internas",
-)
+CAMPOS_SOLO_ADMIN = ("caso_sensible", "notas_internas")
 
 COLUMNAS_PERSONA = [
-    {"nombre": "nombre_completo", "requerido": True, "ejemplo": "Juan Pérez"},
-    {"nombre": "cedula", "requerido": False, "ejemplo": "12345678"},
+    {"nombre": "nombre_completo", "requerido": True, "ejemplo": "María Pérez"},
+    {"nombre": "cedula", "requerido": False, "ejemplo": "18485859"},
     {"nombre": "nacionalidad_cedula", "requerido": False, "ejemplo": "V"},
-    {"nombre": "alias_o_apodos", "requerido": False, "ejemplo": "Juanito"},
-    {"nombre": "edad_aproximada", "requerido": False, "ejemplo": "35"},
-    {"nombre": "sexo", "requerido": False, "ejemplo": "M"},
+    {"nombre": "alias_o_apodos", "requerido": False, "ejemplo": "Marita"},
+    {"nombre": "edad_aproximada", "requerido": False, "ejemplo": "37"},
+    {"nombre": "sexo", "requerido": False, "ejemplo": "F"},
     {"nombre": "tipo_sangre", "requerido": False, "ejemplo": "O+"},
-    {"nombre": "estado_ultima_ubicacion", "requerido": False, "ejemplo": "miranda"},
-    {"nombre": "detalle_ultima_ubicacion", "requerido": False, "ejemplo": "El Valle"},
-    {"nombre": "fecha_ultimo_contacto", "requerido": True, "ejemplo": "2026-06-26"},
-    {"nombre": "hospital_codigo", "requerido": True, "ejemplo": "HV"},
+    {"nombre": "estado_ultima_ubicacion", "requerido": False, "ejemplo": "la_guaira"},
+    {"nombre": "detalle_ultima_ubicacion", "requerido": False, "ejemplo": "Residencia Miramar"},
     {"nombre": "estado_actual", "requerido": False, "ejemplo": "hospitalizado"},
     {"nombre": "hospital_origen", "requerido": False, "ejemplo": "Hospital Militar"},
-    {"nombre": "fuente_informacion", "requerido": False, "ejemplo": "hospital"},
-    {"nombre": "detalle_fuente", "requerido": False, "ejemplo": ""},
-    {"nombre": "validado_por", "requerido": False, "ejemplo": "Operador01"},
-    {"nombre": "notas_internas", "requerido": False, "ejemplo": ""},
+    {"nombre": "hospital_codigo", "requerido": False, "ejemplo": "HV"},
 ]
 
 ESTADOS_VALIDOS = {c[0] for c in EstadoVenezolano.choices}
@@ -52,7 +33,6 @@ ESTADOS_PAC_VALIDOS = {c[0] for c in EstadoPaciente.choices}
 NAC_VALIDAS = {c[0] for c in NacionalidadCedula.choices}
 SEXO_VALIDOS = {c[0] for c in Sexo.choices}
 SANGRE_VALIDOS = {c[0] for c in TipoSangre.choices}
-FUENTE_VALIDOS = {c[0] for c in FuenteInformacion.choices}
 
 
 def _parse_fecha(valor):
@@ -67,17 +47,10 @@ def _parse_fecha(valor):
     return None
 
 
-class FuenteActualizacionInline(admin.TabularInline):
-    model = FuenteActualizacion
+class ActualizacionEstadoInline(admin.TabularInline):
+    model = ActualizacionEstado
     extra = 0
-    readonly_fields = (
-        "estado_anterior",
-        "estado_nuevo",
-        "fuente",
-        "detalle",
-        "fecha",
-        "registrado_por",
-    )
+    readonly_fields = ("estado_anterior", "estado_nuevo", "notas", "fecha", "registrado_por")
     can_delete = False
 
     def has_add_permission(self, request, obj=None):
@@ -96,17 +69,10 @@ class PersonaReportadaAdmin(admin.ModelAdmin):
         "caso_sensible",
         "fecha_actualizacion",
     )
-    list_filter = (
-        "estado_actual",
-        "hospital",
-        "estado_ultima_ubicacion",
-        "caso_sensible",
-        "sexo",
-        "fuente_informacion",
-    )
+    list_filter = ("estado_actual", "hospital", "estado_ultima_ubicacion", "caso_sensible", "sexo")
     search_fields = ("nombre_completo", "alias_o_apodos", "id_caso", "cedula")
     readonly_fields = ("id_caso", "fecha_actualizacion")
-    inlines = [FuenteActualizacionInline]
+    inlines = [ActualizacionEstadoInline]
     actions = ["exportar_csv"]
     change_list_template = "admin/personas/personareportada/change_list.html"
 
@@ -144,15 +110,7 @@ class PersonaReportadaAdmin(admin.ModelAdmin):
             "Gestión interna",
             {
                 "classes": ("collapse",),
-                "fields": (
-                    "fuente_informacion",
-                    "detalle_fuente",
-                    "fecha_fuente",
-                    "validado_por",
-                    "caso_sensible",
-                    "notas_internas",
-                    "fecha_actualizacion",
-                ),
+                "fields": ("caso_sensible", "notas_internas", "fecha_actualizacion"),
             },
         ),
     )
@@ -189,13 +147,6 @@ class PersonaReportadaAdmin(admin.ModelAdmin):
         return response
 
     def importar_view(self, request):
-        hospital_forzado = None
-        if not request.user.is_superuser:
-            try:
-                hospital_forzado = request.user.perfilhospital.hospital
-            except Exception:
-                pass
-
         ctx = {
             **self.admin_site.each_context(request),
             "titulo": "Personas Reportadas",
@@ -221,12 +172,7 @@ class PersonaReportadaAdmin(admin.ModelAdmin):
             def _col(val):
                 return str(val or "").strip().rstrip("*").strip()
 
-            COLS_CONOCIDAS = {
-                "nombre_completo",
-                "cedula",
-                "hospital_codigo",
-                "fecha_ultimo_contacto",
-            }
+            COLS_CONOCIDAS = {"nombre_completo", "cedula", "estado_actual"}
             fila_enc = 1
             for ri in range(1, 6):
                 vals = {_col(c.value).lower() for c in ws[ri] if c.value}
@@ -248,24 +194,6 @@ class PersonaReportadaAdmin(admin.ModelAdmin):
                     errores.append(f'Fila {i}: "nombre_completo" es obligatorio.')
                     continue
 
-                fecha = _parse_fecha(row.get("fecha_ultimo_contacto"))
-                if not fecha:
-                    errores.append(f'Fila {i}: "fecha_ultimo_contacto" inválida. Use YYYY-MM-DD.')
-                    continue
-
-                if hospital_forzado:
-                    hospital = hospital_forzado
-                else:
-                    codigo_h = str(row.get("hospital_codigo", "") or "").strip().upper()
-                    if not codigo_h:
-                        errores.append(f'Fila {i}: "hospital_codigo" es obligatorio.')
-                        continue
-                    try:
-                        hospital = Hospital.objects.get(codigo=codigo_h)
-                    except Hospital.DoesNotExist:
-                        errores.append(f'Fila {i}: hospital con código "{codigo_h}" no existe.')
-                        continue
-
                 nac = str(row.get("nacionalidad_cedula", "") or "").strip()
                 sexo = str(row.get("sexo", "") or "").strip()
                 sangre = str(row.get("tipo_sangre", "") or "").strip()
@@ -273,12 +201,9 @@ class PersonaReportadaAdmin(admin.ModelAdmin):
                 estado_p = (
                     str(row.get("estado_actual", "") or "").strip() or EstadoPaciente.REPORTADO
                 )
-                fuente = str(row.get("fuente_informacion", "") or "").strip()
 
                 if nac and nac not in NAC_VALIDAS:
-                    errores.append(
-                        f'Fila {i}: nacionalidad_cedula "{nac}" inválida (use V, E o P).'
-                    )
+                    errores.append(f'Fila {i}: nacionalidad_cedula "{nac}" inválida (V, E o P).')
                     continue
                 if sexo and sexo not in SEXO_VALIDOS:
                     errores.append(f'Fila {i}: sexo "{sexo}" inválido.')
@@ -292,9 +217,17 @@ class PersonaReportadaAdmin(admin.ModelAdmin):
                 if estado_p not in ESTADOS_PAC_VALIDOS:
                     errores.append(f'Fila {i}: estado_actual "{estado_p}" inválido.')
                     continue
-                if fuente and fuente not in FUENTE_VALIDOS:
-                    errores.append(f'Fila {i}: fuente_informacion "{fuente}" inválido.')
-                    continue
+
+                # Hospital opcional — se asigna solo si el código existe en el catálogo
+                hospital = None
+                codigo_h = str(row.get("hospital_codigo", "") or "").strip().upper()
+                if codigo_h:
+                    try:
+                        hospital = Hospital.objects.get(codigo=codigo_h)
+                    except Hospital.DoesNotExist:
+                        errores.append(
+                            f'Fila {i}: hospital "{codigo_h}" no encontrado — se omite la asignación.'
+                        )
 
                 edad = row.get("edad_aproximada")
                 try:
@@ -315,15 +248,9 @@ class PersonaReportadaAdmin(admin.ModelAdmin):
                         detalle_ultima_ubicacion=str(
                             row.get("detalle_ultima_ubicacion", "") or ""
                         ).strip(),
-                        fecha_ultimo_contacto=fecha,
-                        hospital=hospital,
                         estado_actual=estado_p,
+                        hospital=hospital,
                         hospital_origen=str(row.get("hospital_origen", "") or "").strip(),
-                        fuente_informacion=fuente or "hospital",
-                        detalle_fuente=str(row.get("detalle_fuente", "") or "").strip(),
-                        validado_por=str(row.get("validado_por", "") or "").strip()
-                        or request.user.username,
-                        notas_internas=str(row.get("notas_internas", "") or "").strip(),
                     )
                     creados += 1
                 except Exception as e:
@@ -334,16 +261,7 @@ class PersonaReportadaAdmin(admin.ModelAdmin):
 
         return render(request, "admin/import_excel.html", ctx)
 
-    # ---- Queryset / permisos ----
-
-    def get_queryset(self, request):
-        qs = super().get_queryset(request)
-        if request.user.is_superuser:
-            return qs
-        try:
-            return qs.filter(hospital=request.user.perfilhospital.hospital)
-        except Exception:
-            return qs.none()
+    # ---- Permisos / campos ----
 
     def get_fields(self, request, obj=None):
         fields = super().get_fields(request, obj)
@@ -351,30 +269,14 @@ class PersonaReportadaAdmin(admin.ModelAdmin):
             fields = [f for f in fields if f not in CAMPOS_SOLO_ADMIN]
         return fields
 
-    def get_form(self, request, obj=None, **kwargs):
-        form = super().get_form(request, obj, **kwargs)
-        if not request.user.is_superuser and "hospital" in form.base_fields:
-            form.base_fields["hospital"].disabled = True
-        if not request.user.is_superuser and "estado_actual" in form.base_fields:
-            form.base_fields["estado_actual"].choices = [
-                c for c in EstadoPaciente.choices if c[0] != EstadoPaciente.FALLECIDO
-            ]
-        return form
-
     def save_model(self, request, obj, form, change):
-        if not request.user.is_superuser:
-            try:
-                obj.hospital = request.user.perfilhospital.hospital
-            except Exception:
-                pass
         if change and "estado_actual" in form.changed_data:
             estado_anterior = PersonaReportada.objects.get(pk=obj.pk).estado_actual
             super().save_model(request, obj, form, change)
-            FuenteActualizacion.objects.create(
+            ActualizacionEstado.objects.create(
                 persona=obj,
                 estado_anterior=estado_anterior,
                 estado_nuevo=obj.estado_actual,
-                fuente="hospital",
                 registrado_por=request.user.get_full_name() or request.user.username,
             )
         else:
@@ -438,7 +340,7 @@ class PersonaReportadaAdmin(admin.ModelAdmin):
                     p.nombre_completo,
                     f"{p.nacionalidad_cedula}-{p.cedula}" if p.cedula else "",
                     p.estado_actual,
-                    str(p.hospital),
+                    str(p.hospital) if p.hospital else "",
                     p.estado_ultima_ubicacion,
                     p.fecha_actualizacion,
                 ]
@@ -446,22 +348,14 @@ class PersonaReportadaAdmin(admin.ModelAdmin):
         return response
 
 
-@admin.register(FuenteActualizacion)
-class FuenteActualizacionAdmin(admin.ModelAdmin):
-    list_display = (
-        "persona",
-        "estado_anterior",
-        "estado_nuevo",
-        "fuente",
-        "fecha",
-        "registrado_por",
-    )
+@admin.register(ActualizacionEstado)
+class ActualizacionEstadoAdmin(admin.ModelAdmin):
+    list_display = ("persona", "estado_anterior", "estado_nuevo", "fecha", "registrado_por")
     readonly_fields = (
         "persona",
         "estado_anterior",
         "estado_nuevo",
-        "fuente",
-        "detalle",
+        "notas",
         "fecha",
         "registrado_por",
     )

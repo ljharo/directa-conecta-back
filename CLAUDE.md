@@ -56,29 +56,31 @@ Copiar `.env.example` como `.env` y ajustar los valores.
 
 ```
 apps/
-├── centros/     # Modelo Hospital + importación Excel desde Admin
-├── personas/    # Modelo PersonaReportada + FuenteActualizacion + choices
-├── usuarios/    # Modelo PerfilHospital (OneToOne→User, FK→Hospital)
+├── centros/     # Modelos Hospital + Edificio, importación Excel desde Admin
+├── personas/    # Modelos PersonaReportada + ActualizacionEstado + choices
+├── usuarios/    # Sin modelos propios; administra User estándar de Django
 └── api/         # API REST para el chatbot de Telegram
 ```
 
-### `centros` — Hospitales
+### `centros` — Centros y edificios
 - **Hospital**: nombre, codigo (único), tipo, estado venezolano, ciudad, dirección, teléfono, capacidad, activo.
-- Admin permite importar desde Excel y descargar plantilla.
+- **Edificio**: nombre, estado, ciudad, dirección, estado_estructural, notas.
+- Admin permite importar hospitales desde Excel y descargar plantilla.
 
 ### `personas` — Personas reportadas
-- **PersonaReportada**: id_caso (auto DC-XXXXX), datos personales, estado clínico, ubicación, metadatos de reporte.
-- **FuenteActualizacion**: auditoría de cambios de estado (quién, cuándo, de qué a qué).
+- **PersonaReportada**: id_caso (auto DC-XXXXX), datos personales, estado clínico, ubicación. El hospital es FK opcional — se puede registrar sin conocer el centro.
+- **ActualizacionEstado**: auditoría de cambios de estado (quién, cuándo, de qué a qué). Se crea automáticamente al editar `estado_actual` desde el Admin.
 - `caso_sensible` se activa automáticamente cuando `estado_actual = fallecido`.
 
-### `usuarios` — Perfiles
-- **PerfilHospital**: vincula un `User` de Django con un `Hospital`.
-- Admins (superuser): acceso total a todos los registros.
-- OperadorHospital: solo ve y crea registros de su hospital, sin campos sensibles.
+### `usuarios` — Roles
+Los roles se manejan con campos nativos de Django `User`:
+- `is_superuser = True` → **Admin**: acceso total, gestión de usuarios.
+- `is_staff = True` → **Operador**: CRUD de pacientes, hospitales y edificios; no puede gestionar usuarios.
 
 ### `api` — API REST
 - Autenticación por API key en header `Authorization: Bearer <key>`.
 - `GET /api/v1/buscar/?q=<texto>&page=<n>` — búsqueda de personas reportadas.
+- `GET /api/v1/edificios/` — listado de edificios con daño estructural.
 
 ---
 
@@ -86,12 +88,12 @@ apps/
 
 | Rol | Acceso |
 |---|---|
-| **Superuser (Admin)** | Todos los hospitales, todos los campos, importar/exportar, gestionar usuarios |
-| **OperadorHospital** | Solo su hospital, sin campos de reportante, sin notas internas |
+| **Superuser (Admin)** | Todo: pacientes, hospitales, edificios, usuarios, campos sensibles |
+| **Operador** | CRUD en pacientes, hospitales y edificios; sin gestión de usuarios; sin campos sensibles (caso_sensible, notas_internas) |
 
-Para crear un OperadorHospital:
-1. Crear el `User` desde Admin → Usuarios.
-2. Asignarle un `PerfilHospital` con el hospital correspondiente.
+Para crear un Operador:
+1. Crear el `User` desde Admin → Usuarios (solo superuser puede hacer esto).
+2. Marcar `is_staff = True` y asignar permisos de modelo o grupo.
 
 ---
 

@@ -8,7 +8,6 @@ from .choices import (
     TipoSangre,
     EstadoVenezolano,
     EstadoPaciente,
-    FuenteInformacion,
 )
 
 
@@ -51,7 +50,11 @@ class PersonaReportada(models.Model):
 
     # Estado clínico
     hospital = models.ForeignKey(
-        Hospital, on_delete=models.PROTECT, verbose_name="Hospital / Centro"
+        Hospital,
+        on_delete=models.PROTECT,
+        null=True,
+        blank=True,
+        verbose_name="Hospital / Centro",
     )
     estado_actual = models.CharField(
         "Estado actual",
@@ -60,19 +63,13 @@ class PersonaReportada(models.Model):
         default=EstadoPaciente.REPORTADO,
     )
     hospital_origen = models.CharField(
-        "Hospital de origen",
+        "Última ubicación conocida",
         max_length=200,
         blank=True,
-        help_text="Si fue trasladada, centro anterior",
+        help_text="Hospital, refugio, sector u otro lugar donde fue visto por última vez",
     )
 
     # Gestión interna (solo Admin)
-    fuente_informacion = models.CharField(
-        "Fuente", max_length=30, blank=True, choices=FuenteInformacion.choices
-    )
-    detalle_fuente = models.CharField("Detalle fuente", max_length=200, blank=True)
-    fecha_fuente = models.DateField("Fecha fuente", null=True, blank=True)
-    validado_por = models.CharField("Validado por", max_length=100, blank=True)
     caso_sensible = models.BooleanField("Caso sensible", default=False)
     notas_internas = models.TextField("Notas internas", blank=True)
 
@@ -111,7 +108,7 @@ class PersonaReportada(models.Model):
         super().save(*args, **kwargs)
 
 
-class FuenteActualizacion(models.Model):
+class ActualizacionEstado(models.Model):
     persona = models.ForeignKey(
         PersonaReportada,
         on_delete=models.CASCADE,
@@ -122,8 +119,7 @@ class FuenteActualizacion(models.Model):
         "Estado anterior", max_length=30, choices=EstadoPaciente.choices, blank=True
     )
     estado_nuevo = models.CharField("Estado nuevo", max_length=30, choices=EstadoPaciente.choices)
-    fuente = models.CharField("Fuente", max_length=30, choices=FuenteInformacion.choices)
-    detalle = models.CharField("Detalle", max_length=200, blank=True)
+    notas = models.CharField("Notas", max_length=200, blank=True)
     fecha = models.DateTimeField("Fecha", auto_now_add=True)
     registrado_por = models.CharField("Registrado por", max_length=100)
 

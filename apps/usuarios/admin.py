@@ -1,18 +1,22 @@
 from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
 from django.contrib.auth.models import User
-from .models import PerfilHospital
-
-
-class PerfilHospitalInline(admin.StackedInline):
-    model = PerfilHospital
-    can_delete = False
-    verbose_name_plural = "Hospital asignado"
-
-
-class UserAdmin(BaseUserAdmin):
-    inlines = (PerfilHospitalInline,)
-
 
 admin.site.unregister(User)
-admin.site.register(User, UserAdmin)
+
+
+@admin.register(User)
+class UserAdmin(BaseUserAdmin):
+    """Solo el superusuario puede gestionar usuarios desde el Admin."""
+
+    def has_module_perms(self, request):
+        return request.user.is_superuser
+
+    def has_add_permission(self, request):
+        return request.user.is_superuser
+
+    def has_change_permission(self, request, obj=None):
+        return request.user.is_superuser
+
+    def has_delete_permission(self, request, obj=None):
+        return request.user.is_superuser
