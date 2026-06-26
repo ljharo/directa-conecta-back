@@ -92,8 +92,15 @@ Los roles se manejan con campos nativos de Django `User`:
 | **Operador** | CRUD en pacientes, hospitales y edificios; sin gestión de usuarios; sin campos sensibles (caso_sensible, notas_internas) |
 
 Para crear un Operador:
-1. Crear el `User` desde Admin → Usuarios (solo superuser puede hacer esto).
-2. Marcar `is_staff = True` y asignar permisos de modelo o grupo.
+1. Entrar al Admin como superusuario.
+2. Ir a **Autenticación y autorización → Usuarios → Agregar usuario**.
+3. Ingresar nombre de usuario y contraseña, guardar.
+4. En la pantalla siguiente marcar **Activo** y **Es staff**.
+5. En la sección **Grupos**, seleccionar **Operador** y moverlo a "Grupos elegidos".
+6. Guardar.
+
+El grupo **Operador** se crea automáticamente al arrancar el contenedor (via `post_migrate`).
+No hace falta asignar permisos individuales; el grupo ya los tiene configurados.
 
 ---
 
