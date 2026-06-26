@@ -94,7 +94,6 @@ class BuscarPacienteView(APIView):
                 status_codes=['401'],
             ),
         ],
-        security=[{'BearerAuth': []}],
     )
     def get(self, request):
         q = request.query_params.get('q', '').strip()
