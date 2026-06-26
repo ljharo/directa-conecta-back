@@ -1,3 +1,4 @@
+import datetime
 from django.db import models
 from django.core.exceptions import ValidationError
 from apps.centros.models import Hospital
@@ -29,7 +30,8 @@ class PersonaReportada(models.Model):
                                                 blank=True, choices=EstadoVenezolano.choices)
     detalle_ultima_ubicacion = models.CharField('Detalle ubicación', max_length=200, blank=True,
                                                 help_text='Sector, parroquia, referencia')
-    fecha_ultimo_contacto   = models.DateField('Fecha último contacto')
+    fecha_ultimo_contacto   = models.DateField('Fecha último contacto',
+                                               default=datetime.date.today)
 
     # Estado clínico
     hospital        = models.ForeignKey(Hospital, on_delete=models.PROTECT,
@@ -41,11 +43,11 @@ class PersonaReportada(models.Model):
                                        help_text='Si fue trasladada, centro anterior')
 
     # Gestión interna (solo Admin)
-    fuente_informacion = models.CharField('Fuente', max_length=30,
+    fuente_informacion = models.CharField('Fuente', max_length=30, blank=True,
                                           choices=FuenteInformacion.choices)
     detalle_fuente     = models.CharField('Detalle fuente', max_length=200, blank=True)
     fecha_fuente       = models.DateField('Fecha fuente', null=True, blank=True)
-    validado_por       = models.CharField('Validado por', max_length=100)
+    validado_por       = models.CharField('Validado por', max_length=100, blank=True)
     caso_sensible      = models.BooleanField('Caso sensible', default=False)
     notas_internas     = models.TextField('Notas internas', blank=True)
 
