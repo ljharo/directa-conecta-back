@@ -12,9 +12,12 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'rest_framework',
+    'drf_spectacular',
     'apps.centros',
     'apps.personas',
     'apps.usuarios',
+    'apps.api',
 ]
 
 MIDDLEWARE = [
@@ -74,3 +77,38 @@ STATIC_URL = '/static/'
 STATIC_ROOT = BASE_DIR / 'staticfiles'
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+API_KEY_BOT = config('API_KEY_BOT', default='')
+
+REST_FRAMEWORK = {
+    'DEFAULT_RENDERER_CLASSES': ['rest_framework.renderers.JSONRenderer'],
+    'DEFAULT_AUTHENTICATION_CLASSES': ['apps.api.authentication.APIKeyAuthentication'],
+    'DEFAULT_PERMISSION_CLASSES': ['rest_framework.permissions.IsAuthenticated'],
+    'DEFAULT_SCHEMA_CLASS': 'drf_spectacular.openapi.AutoSchema',
+    'UNAUTHENTICATED_USER': None,
+}
+
+SPECTACULAR_SETTINGS = {
+    'TITLE': 'Directa Conecta API',
+    'DESCRIPTION': (
+        'API REST del Sistema de Gestión de Personas Reportadas — Emergencia Sísmica Venezuela 2026.\n\n'
+        '## Autenticación\n'
+        'Todas las rutas requieren el header:\n'
+        '```\nAuthorization: Bearer <API_KEY_BOT>\n```\n'
+        'La clave se configura en la variable de entorno `API_KEY_BOT` del servidor.'
+    ),
+    'VERSION': '1.0.0',
+    'SERVE_INCLUDE_SCHEMA': False,
+    'SECURITY': [{'BearerAuth': []}],
+    'COMPONENTS': {
+        'securitySchemes': {
+            'BearerAuth': {
+                'type': 'http',
+                'scheme': 'bearer',
+                'description': 'API key fija del bot. Header: Authorization: Bearer <key>',
+            }
+        }
+    },
+    'CONTACT': {'name': 'Directa Group'},
+    'LICENSE': {'name': 'Privado'},
+}
