@@ -167,15 +167,18 @@ class PersonaReportadaAdmin(admin.ModelAdmin):
                 ctx['errores'] = ['El archivo no es un Excel válido (.xlsx).']
                 return render(request, 'admin/import_excel.html', ctx)
 
-            # Detectar fila de encabezados (puede estar en fila 1 o 2 si hay título)
+            # Detectar fila de encabezados; limpiar sufijo " *" de columnas requeridas
+            def _col(val):
+                return str(val or '').strip().rstrip('*').strip()
+
             COLS_CONOCIDAS = {'nombre_completo', 'cedula', 'hospital_codigo', 'fecha_ultimo_contacto'}
             fila_enc = 1
             for ri in range(1, 6):
-                vals = {str(c.value).strip().lower() for c in ws[ri] if c.value}
+                vals = {_col(c.value).lower() for c in ws[ri] if c.value}
                 if vals & COLS_CONOCIDAS:
                     fila_enc = ri
                     break
-            encabezado = [str(c.value).strip() if c.value else '' for c in ws[fila_enc]]
+            encabezado = [_col(c.value) for c in ws[fila_enc]]
             errores, creados = [], 0
 
             for i, fila in enumerate(ws.iter_rows(min_row=fila_enc + 1, values_only=True), start=fila_enc + 1):
