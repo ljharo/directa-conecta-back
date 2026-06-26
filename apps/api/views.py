@@ -13,89 +13,89 @@ from .authentication import APIKeyAuthentication
 PAGE_SIZE = 10
 
 
-@extend_schema(
-    tags=['Pacientes'],
-    summary='Buscar personas reportadas',
-    description=(
-        'Busca personas reportadas en el sistema por nombre, cédula, ID de caso, '
-        'alias o nombre/código del hospital. La búsqueda es insensible a mayúsculas '
-        'y devuelve coincidencias parciales. Resultados paginados de 10 en 10.'
-    ),
-    parameters=[
-        OpenApiParameter(
-            name='q',
-            type=OpenApiTypes.STR,
-            location=OpenApiParameter.QUERY,
-            required=True,
-            description='Texto de búsqueda (mínimo 2 caracteres). Busca en: nombre completo, alias, cédula, ID caso, nombre y código del hospital.',
-            examples=[
-                OpenApiExample('Por nombre',   value='Juan Pérez'),
-                OpenApiExample('Por cédula',   value='12345678'),
-                OpenApiExample('Por ID caso',  value='DC-00001'),
-                OpenApiExample('Por hospital', value='Hospital Vargas'),
-            ],
-        ),
-        OpenApiParameter(
-            name='page',
-            type=OpenApiTypes.INT,
-            location=OpenApiParameter.QUERY,
-            required=False,
-            description='Número de página (default: 1).',
-        ),
-    ],
-    responses={
-        200: BusquedaResponseSerializer,
-        400: OpenApiTypes.OBJECT,
-        401: OpenApiTypes.OBJECT,
-    },
-    examples=[
-        OpenApiExample(
-            'Respuesta exitosa',
-            value={
-                'count': 1,
-                'page': 1,
-                'total_pages': 1,
-                'next': None,
-                'previous': None,
-                'results': [{
-                    'id_caso': 'DC-00001',
-                    'nombre_completo': 'Juan Pérez',
-                    'alias_o_apodos': 'Juanito',
-                    'cedula': 'V-12345678',
-                    'edad_aproximada': 35,
-                    'sexo': 'Masculino',
-                    'tipo_sangre': 'O+',
-                    'estado_actual': 'Hospitalizado — Estable',
-                    'caso_sensible': False,
-                    'hospital': 'Hospital Vargas (HV)',
-                    'hospital_origen': '',
-                    'estado_ultima_ubicacion': 'Distrito Capital',
-                    'detalle_ultima_ubicacion': 'El Valle',
-                    'fecha_ultimo_contacto': '2026-06-26',
-                    'fecha_actualizacion': '2026-06-26T14:30:00',
-                }],
-            },
-            response_only=True,
-            status_codes=['200'],
-        ),
-        OpenApiExample(
-            'Error — query muy corta',
-            value={'error': 'El parámetro "q" debe tener al menos 2 caracteres.'},
-            response_only=True,
-            status_codes=['400'],
-        ),
-        OpenApiExample(
-            'Error — sin autenticación',
-            value={'detail': 'API key requerida. Header: Authorization: Bearer <key>'},
-            response_only=True,
-            status_codes=['401'],
-        ),
-    ],
-    auth=['BearerAuth'],
-)
 class BuscarPacienteView(APIView):
     authentication_classes = [APIKeyAuthentication]
 
+    @extend_schema(
+        tags=['Pacientes'],
+        summary='Buscar personas reportadas',
+        description=(
+            'Busca personas reportadas en el sistema por nombre, cédula, ID de caso, '
+            'alias o nombre/código del hospital. La búsqueda es insensible a mayúsculas '
+            'y devuelve coincidencias parciales. Resultados paginados de 10 en 10.'
+        ),
+        parameters=[
+            OpenApiParameter(
+                name='q',
+                type=OpenApiTypes.STR,
+                location=OpenApiParameter.QUERY,
+                required=True,
+                description='Texto de búsqueda (mínimo 2 caracteres). Busca en: nombre completo, alias, cédula, ID caso, nombre y código del hospital.',
+                examples=[
+                    OpenApiExample('Por nombre',   value='Juan Pérez'),
+                    OpenApiExample('Por cédula',   value='12345678'),
+                    OpenApiExample('Por ID caso',  value='DC-00001'),
+                    OpenApiExample('Por hospital', value='Hospital Vargas'),
+                ],
+            ),
+            OpenApiParameter(
+                name='page',
+                type=OpenApiTypes.INT,
+                location=OpenApiParameter.QUERY,
+                required=False,
+                description='Número de página (default: 1).',
+            ),
+        ],
+        responses={
+            200: BusquedaResponseSerializer,
+            400: OpenApiTypes.OBJECT,
+            401: OpenApiTypes.OBJECT,
+        },
+        examples=[
+            OpenApiExample(
+                'Respuesta exitosa',
+                value={
+                    'count': 1,
+                    'page': 1,
+                    'total_pages': 1,
+                    'next': None,
+                    'previous': None,
+                    'results': [{
+                        'id_caso': 'DC-00001',
+                        'nombre_completo': 'Juan Pérez',
+                        'alias_o_apodos': 'Juanito',
+                        'cedula': 'V-12345678',
+                        'edad_aproximada': 35,
+                        'sexo': 'Masculino',
+                        'tipo_sangre': 'O+',
+                        'estado_actual': 'Hospitalizado — Estable',
+                        'caso_sensible': False,
+                        'hospital': 'Hospital Vargas (HV)',
+                        'hospital_origen': '',
+                        'estado_ultima_ubicacion': 'Distrito Capital',
+                        'detalle_ultima_ubicacion': 'El Valle',
+                        'fecha_ultimo_contacto': '2026-06-26',
+                        'fecha_actualizacion': '2026-06-26T14:30:00',
+                    }],
+                },
+                response_only=True,
+                status_codes=['200'],
+            ),
+            OpenApiExample(
+                'Error — query muy corta',
+                value={'error': 'El parámetro "q" debe tener al menos 2 caracteres.'},
+                response_only=True,
+                status_codes=['400'],
+            ),
+            OpenApiExample(
+                'Error — sin autenticación',
+                value={'detail': 'API key requerida. Header: Authorization: Bearer <key>'},
+                response_only=True,
+                status_codes=['401'],
+            ),
+        ],
+        security=[{'BearerAuth': []}],
+    )
     def get(self, request):
         q = request.query_params.get('q', '').strip()
 

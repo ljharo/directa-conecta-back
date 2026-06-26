@@ -99,6 +99,8 @@ SPECTACULAR_SETTINGS = {
     ),
     'VERSION': '1.0.0',
     'SERVE_INCLUDE_SCHEMA': False,
+    'SERVE_AUTHENTICATION_CLASSES': [],
+    'SERVE_PERMISSIONS': ['rest_framework.permissions.AllowAny'],
     'SECURITY': [{'BearerAuth': []}],
     'COMPONENTS': {
         'securitySchemes': {

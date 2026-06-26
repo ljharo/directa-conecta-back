@@ -30,24 +30,24 @@ class PersonaReportadaSerializer(serializers.ModelSerializer):
             'fecha_actualizacion',
         ]
 
-    def get_cedula(self, obj):
+    def get_cedula(self, obj) -> str | None:
         if obj.cedula:
             return f'{obj.nacionalidad_cedula}-{obj.cedula}'
         return None
 
-    def get_sexo(self, obj):
+    def get_sexo(self, obj) -> str | None:
         return obj.get_sexo_display() if obj.sexo else None
 
-    def get_tipo_sangre(self, obj):
+    def get_tipo_sangre(self, obj) -> str | None:
         return obj.tipo_sangre if obj.tipo_sangre else None
 
-    def get_estado_actual(self, obj):
+    def get_estado_actual(self, obj) -> str:
         return obj.get_estado_actual_display()
 
-    def get_hospital(self, obj):
+    def get_hospital(self, obj) -> str | None:
         return str(obj.hospital) if obj.hospital_id else None
 
-    def get_estado_ultima_ubicacion(self, obj):
+    def get_estado_ultima_ubicacion(self, obj) -> str | None:
         return obj.get_estado_ultima_ubicacion_display() if obj.estado_ultima_ubicacion else None
 
 

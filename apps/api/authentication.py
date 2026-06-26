@@ -8,7 +8,7 @@ class APIKeyAuthentication(BaseAuthentication):
     def authenticate(self, request):
         auth_header = request.META.get('HTTP_AUTHORIZATION', '')
         if not auth_header.startswith('Bearer '):
-            raise AuthenticationFailed('API key requerida. Header: Authorization: Bearer <key>')
+            return None  # no es nuestra esquema; DRF seguirá con otros authenticators
 
         key = auth_header.split(' ', 1)[1].strip()
         expected = settings.API_KEY_BOT
