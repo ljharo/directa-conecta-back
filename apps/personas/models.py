@@ -3,7 +3,7 @@ from django.core.exceptions import ValidationError
 from apps.centros.models import Hospital
 from .choices import (
     NacionalidadCedula, Sexo, TipoSangre, EstadoVenezolano,
-    EstadoPaciente, CanalReportante, FuenteInformacion,
+    EstadoPaciente, FuenteInformacion,
 )
 
 
@@ -39,14 +39,6 @@ class PersonaReportada(models.Model):
                                        default=EstadoPaciente.REPORTADO)
     hospital_origen = models.CharField('Hospital de origen', max_length=200, blank=True,
                                        help_text='Si fue trasladada, centro anterior')
-
-    # Reportante (solo Admin)
-    nombre_reportante   = models.CharField('Nombre reportante', max_length=200)
-    relacion_reportante = models.CharField('Relación', max_length=100, blank=True)
-    telefono_reportante = models.CharField('Teléfono reportante', max_length=20)
-    canal_reportante    = models.CharField('Canal', max_length=20,
-                                           choices=CanalReportante.choices)
-    consentimiento_datos = models.BooleanField('Consentimiento datos', default=False)
 
     # Gestión interna (solo Admin)
     fuente_informacion = models.CharField('Fuente', max_length=30,

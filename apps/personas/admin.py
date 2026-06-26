@@ -10,40 +10,33 @@ import datetime
 from .models import PersonaReportada, FuenteActualizacion
 from .choices import (
     EstadoPaciente, EstadoVenezolano, NacionalidadCedula,
-    Sexo, TipoSangre, CanalReportante, FuenteInformacion,
+    Sexo, TipoSangre, FuenteInformacion,
 )
 from apps.centros.models import Hospital
 
 CAMPOS_SOLO_ADMIN = (
-    'telefono_reportante', 'nombre_reportante', 'relacion_reportante',
-    'canal_reportante', 'consentimiento_datos', 'fuente_informacion',
-    'detalle_fuente', 'fecha_fuente', 'validado_por',
-    'caso_sensible', 'notas_internas',
+    'fuente_informacion', 'detalle_fuente', 'fecha_fuente',
+    'validado_por', 'caso_sensible', 'notas_internas',
 )
 
 COLUMNAS_PERSONA = [
-    {'nombre': 'nombre_completo',         'requerido': True,  'ejemplo': 'Juan Pérez'},
-    {'nombre': 'cedula',                  'requerido': False, 'ejemplo': '12345678'},
-    {'nombre': 'nacionalidad_cedula',     'requerido': False, 'ejemplo': 'V'},
-    {'nombre': 'alias_o_apodos',          'requerido': False, 'ejemplo': 'Juanito'},
-    {'nombre': 'edad_aproximada',         'requerido': False, 'ejemplo': '35'},
-    {'nombre': 'sexo',                    'requerido': False, 'ejemplo': 'M'},
-    {'nombre': 'tipo_sangre',             'requerido': False, 'ejemplo': 'O+'},
-    {'nombre': 'estado_ultima_ubicacion', 'requerido': False, 'ejemplo': 'miranda'},
-    {'nombre': 'detalle_ultima_ubicacion','requerido': False, 'ejemplo': 'El Valle'},
-    {'nombre': 'fecha_ultimo_contacto',   'requerido': True,  'ejemplo': '2026-06-26'},
-    {'nombre': 'hospital_codigo',         'requerido': True,  'ejemplo': 'HV'},
-    {'nombre': 'estado_actual',           'requerido': False, 'ejemplo': 'hospitalizado'},
-    {'nombre': 'hospital_origen',         'requerido': False, 'ejemplo': 'Hospital Militar'},
-    {'nombre': 'nombre_reportante',       'requerido': True,  'ejemplo': 'María López'},
-    {'nombre': 'relacion_reportante',     'requerido': False, 'ejemplo': 'Madre'},
-    {'nombre': 'telefono_reportante',     'requerido': True,  'ejemplo': '+58 414 0000000'},
-    {'nombre': 'canal_reportante',        'requerido': False, 'ejemplo': 'whatsapp'},
-    {'nombre': 'consentimiento_datos',    'requerido': False, 'ejemplo': 'si'},
-    {'nombre': 'fuente_informacion',      'requerido': True,  'ejemplo': 'hospital'},
-    {'nombre': 'detalle_fuente',          'requerido': False, 'ejemplo': ''},
-    {'nombre': 'validado_por',            'requerido': True,  'ejemplo': 'Operador01'},
-    {'nombre': 'notas_internas',          'requerido': False, 'ejemplo': ''},
+    {'nombre': 'nombre_completo',          'requerido': True,  'ejemplo': 'Juan Pérez'},
+    {'nombre': 'cedula',                   'requerido': False, 'ejemplo': '12345678'},
+    {'nombre': 'nacionalidad_cedula',      'requerido': False, 'ejemplo': 'V'},
+    {'nombre': 'alias_o_apodos',           'requerido': False, 'ejemplo': 'Juanito'},
+    {'nombre': 'edad_aproximada',          'requerido': False, 'ejemplo': '35'},
+    {'nombre': 'sexo',                     'requerido': False, 'ejemplo': 'M'},
+    {'nombre': 'tipo_sangre',              'requerido': False, 'ejemplo': 'O+'},
+    {'nombre': 'estado_ultima_ubicacion',  'requerido': False, 'ejemplo': 'miranda'},
+    {'nombre': 'detalle_ultima_ubicacion', 'requerido': False, 'ejemplo': 'El Valle'},
+    {'nombre': 'fecha_ultimo_contacto',    'requerido': True,  'ejemplo': '2026-06-26'},
+    {'nombre': 'hospital_codigo',          'requerido': True,  'ejemplo': 'HV'},
+    {'nombre': 'estado_actual',            'requerido': False, 'ejemplo': 'hospitalizado'},
+    {'nombre': 'hospital_origen',          'requerido': False, 'ejemplo': 'Hospital Militar'},
+    {'nombre': 'fuente_informacion',       'requerido': False, 'ejemplo': 'hospital'},
+    {'nombre': 'detalle_fuente',           'requerido': False, 'ejemplo': ''},
+    {'nombre': 'validado_por',             'requerido': False, 'ejemplo': 'Operador01'},
+    {'nombre': 'notas_internas',           'requerido': False, 'ejemplo': ''},
 ]
 
 ESTADOS_VALIDOS     = {c[0] for c in EstadoVenezolano.choices}
@@ -51,7 +44,6 @@ ESTADOS_PAC_VALIDOS = {c[0] for c in EstadoPaciente.choices}
 NAC_VALIDAS         = {c[0] for c in NacionalidadCedula.choices}
 SEXO_VALIDOS        = {c[0] for c in Sexo.choices}
 SANGRE_VALIDOS      = {c[0] for c in TipoSangre.choices}
-CANAL_VALIDOS       = {c[0] for c in CanalReportante.choices}
 FUENTE_VALIDOS      = {c[0] for c in FuenteInformacion.choices}
 
 
@@ -103,11 +95,6 @@ class PersonaReportadaAdmin(admin.ModelAdmin):
         ('Estado clínico', {
             'fields': ('hospital', 'estado_actual', 'hospital_origen')
         }),
-        ('Reportante', {
-            'classes': ('collapse',),
-            'fields': ('nombre_reportante', 'relacion_reportante',
-                       'telefono_reportante', 'canal_reportante', 'consentimiento_datos')
-        }),
         ('Gestión interna', {
             'classes': ('collapse',),
             'fields': ('fuente_informacion', 'detalle_fuente', 'fecha_fuente',
@@ -119,8 +106,8 @@ class PersonaReportadaAdmin(admin.ModelAdmin):
     def get_urls(self):
         urls = super().get_urls()
         return [
-            path('importar/',        self.admin_site.admin_view(self.importar_view),   name='personas_personareportada_importar'),
-            path('plantilla-excel/', self.admin_site.admin_view(self.plantilla_view),  name='personas_personareportada_plantilla'),
+            path('importar/',        self.admin_site.admin_view(self.importar_view),  name='personas_personareportada_importar'),
+            path('plantilla-excel/', self.admin_site.admin_view(self.plantilla_view), name='personas_personareportada_plantilla'),
         ] + urls
 
     def plantilla_view(self, request):
@@ -137,7 +124,6 @@ class PersonaReportadaAdmin(admin.ModelAdmin):
         return response
 
     def importar_view(self, request):
-        # Determinar hospital forzado para usuario no-admin
         hospital_forzado = None
         if not request.user.is_superuser:
             try:
@@ -167,7 +153,6 @@ class PersonaReportadaAdmin(admin.ModelAdmin):
                 ctx['errores'] = ['El archivo no es un Excel válido (.xlsx).']
                 return render(request, 'admin/import_excel.html', ctx)
 
-            # Detectar fila de encabezados; limpiar sufijo " *" de columnas requeridas
             def _col(val):
                 return str(val or '').strip().rstrip('*').strip()
 
@@ -196,7 +181,6 @@ class PersonaReportadaAdmin(admin.ModelAdmin):
                     errores.append(f'Fila {i}: "fecha_ultimo_contacto" inválida. Use YYYY-MM-DD.')
                     continue
 
-                # Resolver hospital
                 if hospital_forzado:
                     hospital = hospital_forzado
                 else:
@@ -210,13 +194,11 @@ class PersonaReportadaAdmin(admin.ModelAdmin):
                         errores.append(f'Fila {i}: hospital con código "{codigo_h}" no existe.')
                         continue
 
-                # Validaciones opcionales con choices
                 nac      = str(row.get('nacionalidad_cedula', '') or '').strip()
                 sexo     = str(row.get('sexo', '') or '').strip()
                 sangre   = str(row.get('tipo_sangre', '') or '').strip()
                 ub_est   = str(row.get('estado_ultima_ubicacion', '') or '').strip()
                 estado_p = str(row.get('estado_actual', '') or '').strip() or EstadoPaciente.REPORTADO
-                canal    = str(row.get('canal_reportante', '') or '').strip()
                 fuente   = str(row.get('fuente_informacion', '') or '').strip()
 
                 if nac and nac not in NAC_VALIDAS:
@@ -234,25 +216,15 @@ class PersonaReportadaAdmin(admin.ModelAdmin):
                 if estado_p not in ESTADOS_PAC_VALIDOS:
                     errores.append(f'Fila {i}: estado_actual "{estado_p}" inválido.')
                     continue
-                if canal and canal not in CANAL_VALIDOS:
-                    errores.append(f'Fila {i}: canal_reportante "{canal}" inválido.')
-                    continue
                 if fuente and fuente not in FUENTE_VALIDOS:
                     errores.append(f'Fila {i}: fuente_informacion "{fuente}" inválido.')
                     continue
-
-                nombre_rep = str(row.get('nombre_reportante', '') or '').strip()
-                tel_rep    = str(row.get('telefono_reportante', '') or '').strip()
-                validado   = str(row.get('validado_por', '') or '').strip()
 
                 edad = row.get('edad_aproximada')
                 try:
                     edad = int(edad) if edad not in (None, '') else None
                 except (ValueError, TypeError):
                     edad = None
-
-                consentimiento = str(row.get('consentimiento_datos', '') or '').strip().lower()
-                consentimiento = consentimiento in ('si', 'sí', '1', 'true', 'yes')
 
                 try:
                     PersonaReportada.objects.create(
@@ -269,14 +241,9 @@ class PersonaReportadaAdmin(admin.ModelAdmin):
                         hospital                 = hospital,
                         estado_actual            = estado_p,
                         hospital_origen          = str(row.get('hospital_origen', '') or '').strip(),
-                        nombre_reportante        = nombre_rep,
-                        relacion_reportante      = str(row.get('relacion_reportante', '') or '').strip(),
-                        telefono_reportante      = tel_rep,
-                        canal_reportante         = canal or 'otro',
-                        consentimiento_datos     = consentimiento,
                         fuente_informacion       = fuente or 'hospital',
                         detalle_fuente           = str(row.get('detalle_fuente', '') or '').strip(),
-                        validado_por             = validado or request.user.username,
+                        validado_por             = str(row.get('validado_por', '') or '').strip() or request.user.username,
                         notas_internas           = str(row.get('notas_internas', '') or '').strip(),
                     )
                     creados += 1
@@ -325,11 +292,11 @@ class PersonaReportadaAdmin(admin.ModelAdmin):
             estado_anterior = PersonaReportada.objects.get(pk=obj.pk).estado_actual
             super().save_model(request, obj, form, change)
             FuenteActualizacion.objects.create(
-                persona        = obj,
+                persona         = obj,
                 estado_anterior = estado_anterior,
-                estado_nuevo   = obj.estado_actual,
-                fuente         = 'hospital',
-                registrado_por = request.user.get_full_name() or request.user.username,
+                estado_nuevo    = obj.estado_actual,
+                fuente          = 'hospital',
+                registrado_por  = request.user.get_full_name() or request.user.username,
             )
         else:
             super().save_model(request, obj, form, change)
