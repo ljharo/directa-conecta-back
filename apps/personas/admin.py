@@ -28,11 +28,42 @@ COLUMNAS_PERSONA = [
     {"nombre": "hospital_codigo", "requerido": False, "ejemplo": "HV"},
 ]
 
-ESTADOS_VALIDOS = {c[0] for c in EstadoVenezolano.choices}
-ESTADOS_PAC_VALIDOS = {c[0] for c in EstadoPaciente.choices}
-NAC_VALIDAS = {c[0] for c in NacionalidadCedula.choices}
-SEXO_VALIDOS = {c[0] for c in Sexo.choices}
-SANGRE_VALIDOS = {c[0] for c in TipoSangre.choices}
+import unicodedata
+
+
+def _norm(s):
+    s = unicodedata.normalize("NFKD", str(s or "").strip().lower())
+    return "".join(c for c in s if not unicodedata.combining(c))
+
+
+def _build_map(choices_class):
+    """Devuelve dict normalizado → valor interno, aceptando valor Y label."""
+    m = {}
+    for value, label in choices_class.choices:
+        m[_norm(value)] = value
+        m[_norm(label)] = value
+    return m
+
+
+_MAP_ESTADO_VEN = _build_map(EstadoVenezolano)
+_MAP_ESTADO_PAC = _build_map(EstadoPaciente)
+_MAP_NAC = _build_map(NacionalidadCedula)
+_MAP_SEXO = _build_map(Sexo)
+_MAP_SANGRE = _build_map(TipoSangre)
+
+
+def _resolve(raw, mapping):
+    """Resuelve raw al valor interno del choice o devuelve None si no existe."""
+    if not raw:
+        return ""
+    key = _norm(raw)
+    if key in mapping:
+        return mapping[key]
+    # Coincidencia parcial: "La Guaira" → "La Guaira (Vargas)"
+    for norm_key, value in mapping.items():
+        if norm_key.startswith(key) or key.startswith(norm_key):
+            return value
+    return None
 
 
 def _parse_fecha(valor):
@@ -194,28 +225,32 @@ class PersonaReportadaAdmin(admin.ModelAdmin):
                     errores.append(f'Fila {i}: "nombre_completo" es obligatorio.')
                     continue
 
-                nac = str(row.get("nacionalidad_cedula", "") or "").strip()
-                sexo = str(row.get("sexo", "") or "").strip()
-                sangre = str(row.get("tipo_sangre", "") or "").strip()
-                ub_est = str(row.get("estado_ultima_ubicacion", "") or "").strip()
-                estado_p = (
-                    str(row.get("estado_actual", "") or "").strip() or EstadoPaciente.REPORTADO
-                )
+                nac_raw = str(row.get("nacionalidad_cedula", "") or "").strip()
+                sexo_raw = str(row.get("sexo", "") or "").strip()
+                sangre_raw = str(row.get("tipo_sangre", "") or "").strip()
+                ub_est_raw = str(row.get("estado_ultima_ubicacion", "") or "").strip()
+                estado_p_raw = str(row.get("estado_actual", "") or "").strip()
 
-                if nac and nac not in NAC_VALIDAS:
-                    errores.append(f'Fila {i}: nacionalidad_cedula "{nac}" inválida (V, E o P).')
+                nac = _resolve(nac_raw, _MAP_NAC) if nac_raw else ""
+                sexo = _resolve(sexo_raw, _MAP_SEXO) if sexo_raw else ""
+                sangre = _resolve(sangre_raw, _MAP_SANGRE) if sangre_raw else ""
+                ub_est = _resolve(ub_est_raw, _MAP_ESTADO_VEN) if ub_est_raw else ""
+                estado_p = _resolve(estado_p_raw, _MAP_ESTADO_PAC) if estado_p_raw else EstadoPaciente.REPORTADO
+
+                if nac_raw and nac is None:
+                    errores.append(f'Fila {i}: nacionalidad_cedula "{nac_raw}" inválida (V, E o P).')
                     continue
-                if sexo and sexo not in SEXO_VALIDOS:
-                    errores.append(f'Fila {i}: sexo "{sexo}" inválido.')
+                if sexo_raw and sexo is None:
+                    errores.append(f'Fila {i}: sexo "{sexo_raw}" inválido.')
                     continue
-                if sangre and sangre not in SANGRE_VALIDOS:
-                    errores.append(f'Fila {i}: tipo_sangre "{sangre}" inválido.')
+                if sangre_raw and sangre is None:
+                    errores.append(f'Fila {i}: tipo_sangre "{sangre_raw}" inválido.')
                     continue
-                if ub_est and ub_est not in ESTADOS_VALIDOS:
-                    errores.append(f'Fila {i}: estado_ultima_ubicacion "{ub_est}" inválido.')
+                if ub_est_raw and ub_est is None:
+                    errores.append(f'Fila {i}: estado_ultima_ubicacion "{ub_est_raw}" inválido.')
                     continue
-                if estado_p not in ESTADOS_PAC_VALIDOS:
-                    errores.append(f'Fila {i}: estado_actual "{estado_p}" inválido.')
+                if estado_p is None:
+                    errores.append(f'Fila {i}: estado_actual "{estado_p_raw}" inválido.')
                     continue
 
                 # Hospital opcional — se asigna solo si el código existe en el catálogo

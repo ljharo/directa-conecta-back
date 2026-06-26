@@ -68,6 +68,7 @@ class EstadoPaciente(models.TextChoices):
     REPORTADO = "reportado", "Reportado"
     EN_TRASLADO = "en_traslado", "En traslado"
     EN_CENTRO_ACOPIO = "en_centro_acopio", "En centro de acopio"
+    EN_CENTRO_ATENCION = "en_centro_atencion", "En centro de atención"
     HOSPITALIZADO = "hospitalizado", "Hospitalizado — Estable"
     HOSPITALIZADO_CRITICO = "hospitalizado_critico", "Hospitalizado — Crítico"
     DADO_DE_ALTA = "dado_de_alta", "Dado de alta"
