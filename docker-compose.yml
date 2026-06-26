@@ -17,11 +17,13 @@ services:
 
   web:
     build: .
-    command: python manage.py runserver 0.0.0.0:8000
+    command: poetry run dev
     volumes:
       - .:/app
     ports:
       - "${WEB_PORT:-8000}:8000"
+    environment:
+      DJANGO_SETTINGS_MODULE: config.settings.development
     env_file:
       - .env
     depends_on:
