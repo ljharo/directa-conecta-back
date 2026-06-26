@@ -3,7 +3,12 @@ from django.db.models import Q, ProtectedError
 from rest_framework import viewsets, status
 from rest_framework.views import APIView
 from rest_framework.response import Response
-from drf_spectacular.utils import extend_schema, OpenApiParameter, OpenApiExample
+from drf_spectacular.utils import (
+    extend_schema,
+    extend_schema_view,
+    OpenApiParameter,
+    OpenApiExample,
+)
 from drf_spectacular.types import OpenApiTypes
 
 from apps.personas.models import PersonaReportada, ActualizacionEstado
@@ -25,6 +30,7 @@ PAGE_SIZE = 10
 # ---------------------------------------------------------------------------
 # Búsqueda (endpoint legado — solo lectura, paginación custom)
 # ---------------------------------------------------------------------------
+
 
 class BuscarPacienteView(APIView):
     authentication_classes = [APIKeyAuthentication]
@@ -58,7 +64,11 @@ class BuscarPacienteView(APIView):
                 description="Número de página (default: 1).",
             ),
         ],
-        responses={200: BusquedaResponseSerializer, 400: OpenApiTypes.OBJECT, 401: OpenApiTypes.OBJECT},
+        responses={
+            200: BusquedaResponseSerializer,
+            400: OpenApiTypes.OBJECT,
+            401: OpenApiTypes.OBJECT,
+        },
     )
     def get(self, request):
         q = request.query_params.get("q", "").strip()
@@ -114,6 +124,48 @@ class BuscarPacienteView(APIView):
 # CRUD ViewSets
 # ---------------------------------------------------------------------------
 
+_PERSONA_Q_PARAM = OpenApiParameter(
+    "q",
+    OpenApiTypes.STR,
+    OpenApiParameter.QUERY,
+    required=False,
+    description="Filtrar por nombre, cédula, alias o ID caso.",
+)
+
+
+@extend_schema_view(
+    list=extend_schema(
+        tags=["Pacientes"],
+        summary="Listar todas las personas reportadas",
+        parameters=[_PERSONA_Q_PARAM],
+    ),
+    retrieve=extend_schema(
+        tags=["Pacientes"],
+        summary="Obtener una persona por ID caso (ej: DC-00001)",
+    ),
+    create=extend_schema(
+        tags=["Pacientes"],
+        summary="Crear una nueva persona reportada",
+        description=(
+            "Crea un nuevo caso. `id_caso` se genera automáticamente (DC-XXXXX). "
+            "Los campos de tipo choice aceptan tanto el valor interno (`hospitalizado`) "
+            "como el label legible (`Hospitalizado — Estable`). "
+            "Solo `nombre_completo` es obligatorio."
+        ),
+    ),
+    partial_update=extend_schema(
+        tags=["Pacientes"],
+        summary="Actualizar campos de una persona (PATCH parcial)",
+        description=(
+            "Actualiza solo los campos enviados. Si cambia `estado_actual`, "
+            "se registra automáticamente en el historial de actualizaciones."
+        ),
+    ),
+    destroy=extend_schema(
+        tags=["Pacientes"],
+        summary="Eliminar una persona reportada",
+    ),
+)
 class PersonaReportadaViewSet(viewsets.ModelViewSet):
     """CRUD completo para personas reportadas. Lookup por id_caso (ej: DC-00001)."""
 
@@ -156,6 +208,43 @@ class PersonaReportadaViewSet(viewsets.ModelViewSet):
         return self._read_response(instance, status.HTTP_200_OK)
 
 
+@extend_schema_view(
+    list=extend_schema(
+        tags=["Hospitales"],
+        summary="Listar hospitales y centros de ayuda",
+        parameters=[
+            OpenApiParameter(
+                "q",
+                OpenApiTypes.STR,
+                OpenApiParameter.QUERY,
+                required=False,
+                description="Filtrar por nombre, código o ciudad.",
+            ),
+        ],
+    ),
+    retrieve=extend_schema(
+        tags=["Hospitales"],
+        summary="Obtener un hospital por código (ej: HV)",
+    ),
+    create=extend_schema(
+        tags=["Hospitales"],
+        summary="Registrar un nuevo hospital o centro de ayuda",
+        description=(
+            "Campos obligatorios: `nombre`, `codigo` (único), `tipo`, `estado`, `ciudad`. "
+            "Tipos válidos: hospital_publico, hospital_privado, clinica, centro_acopio, "
+            "refugio, proteccion_civil, cruz_roja, otro."
+        ),
+    ),
+    partial_update=extend_schema(
+        tags=["Hospitales"],
+        summary="Actualizar datos de un hospital (PATCH parcial)",
+    ),
+    destroy=extend_schema(
+        tags=["Hospitales"],
+        summary="Eliminar un hospital",
+        description="Falla con error 409 si hay pacientes asociados al hospital.",
+    ),
+)
 class HospitalViewSet(viewsets.ModelViewSet):
     """CRUD completo para hospitales y centros de ayuda. Lookup por codigo (ej: HV)."""
 
@@ -168,9 +257,7 @@ class HospitalViewSet(viewsets.ModelViewSet):
         qs = Hospital.objects.order_by("nombre")
         q = self.request.query_params.get("q", "").strip()
         if q:
-            qs = qs.filter(
-                Q(nombre__icontains=q) | Q(codigo__icontains=q) | Q(ciudad__icontains=q)
-            )
+            qs = qs.filter(Q(nombre__icontains=q) | Q(codigo__icontains=q) | Q(ciudad__icontains=q))
         return qs
 
     def destroy(self, request, *args, **kwargs):
@@ -183,6 +270,45 @@ class HospitalViewSet(viewsets.ModelViewSet):
             )
 
 
+@extend_schema_view(
+    list=extend_schema(
+        tags=["Edificios"],
+        summary="Listar edificios afectados",
+        parameters=[
+            OpenApiParameter(
+                "q",
+                OpenApiTypes.STR,
+                OpenApiParameter.QUERY,
+                required=False,
+                description="Filtrar por nombre, ciudad o dirección.",
+            ),
+            OpenApiParameter(
+                "estado_estructural",
+                OpenApiTypes.STR,
+                OpenApiParameter.QUERY,
+                required=False,
+                description=(
+                    "Filtrar por estado: derrumbado, parcialmente_danado, "
+                    "integridad_delicada, evacuado, en_evaluacion."
+                ),
+            ),
+        ],
+    ),
+    retrieve=extend_schema(tags=["Edificios"], summary="Obtener un edificio por ID"),
+    create=extend_schema(
+        tags=["Edificios"],
+        summary="Registrar un edificio afectado",
+        description=(
+            "Estados estructurales válidos: derrumbado, parcialmente_danado, "
+            "integridad_delicada, evacuado, en_evaluacion. "
+            "También acepta los labels legibles (ej: 'Derrumbado')."
+        ),
+    ),
+    partial_update=extend_schema(
+        tags=["Edificios"], summary="Actualizar datos de un edificio (PATCH parcial)"
+    ),
+    destroy=extend_schema(tags=["Edificios"], summary="Eliminar un edificio del registro"),
+)
 class EdificioViewSet(viewsets.ModelViewSet):
     """CRUD completo para edificios afectados. Lookup por id numérico."""
 
