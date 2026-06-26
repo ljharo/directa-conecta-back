@@ -17,6 +17,7 @@ from .utils import _build_map, _resolve
 # Campo flexible: acepta el valor interno ("la_guaira") o el label ("La Guaira")
 # ---------------------------------------------------------------------------
 
+
 class FlexChoiceField(serializers.CharField):
     def __init__(self, choices_class, **kwargs):
         kwargs.setdefault("required", False)
@@ -44,6 +45,7 @@ class FlexChoiceField(serializers.CharField):
 # ---------------------------------------------------------------------------
 # Serializers de LECTURA (respuestas GET con labels legibles)
 # ---------------------------------------------------------------------------
+
 
 class PersonaReportadaSerializer(serializers.ModelSerializer):
     cedula = serializers.SerializerMethodField()
@@ -140,6 +142,7 @@ class EdificiosResponseSerializer(serializers.Serializer):
 # Serializers de ESCRITURA (POST / PATCH)
 # ---------------------------------------------------------------------------
 
+
 class PersonaReportadaWriteSerializer(serializers.ModelSerializer):
     hospital = serializers.SlugRelatedField(
         slug_field="codigo",
@@ -183,7 +186,9 @@ class PersonaReportadaWriteSerializer(serializers.ModelSerializer):
             if qs.exists():
                 caso = qs.first()
                 raise serializers.ValidationError(
-                    {"cedula": f"Ya existe un caso con esta cédula: {caso.id_caso} — {caso.nombre_completo}"}
+                    {
+                        "cedula": f"Ya existe un caso con esta cédula: {caso.id_caso} — {caso.nombre_completo}"
+                    }
                 )
         return attrs
 

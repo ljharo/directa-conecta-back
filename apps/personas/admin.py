@@ -206,10 +206,16 @@ class PersonaReportadaAdmin(admin.ModelAdmin):
                 sexo = _resolve(sexo_raw, _MAP_SEXO) if sexo_raw else ""
                 sangre = _resolve(sangre_raw, _MAP_SANGRE) if sangre_raw else ""
                 ub_est = _resolve(ub_est_raw, _MAP_ESTADO_VEN) if ub_est_raw else ""
-                estado_p = _resolve(estado_p_raw, _MAP_ESTADO_PAC) if estado_p_raw else EstadoPaciente.REPORTADO
+                estado_p = (
+                    _resolve(estado_p_raw, _MAP_ESTADO_PAC)
+                    if estado_p_raw
+                    else EstadoPaciente.REPORTADO
+                )
 
                 if nac_raw and nac is None:
-                    errores.append(f'Fila {i}: nacionalidad_cedula "{nac_raw}" inválida (V, E o P).')
+                    errores.append(
+                        f'Fila {i}: nacionalidad_cedula "{nac_raw}" inválida (V, E o P).'
+                    )
                     continue
                 if sexo_raw and sexo is None:
                     errores.append(f'Fila {i}: sexo "{sexo_raw}" inválido.')
