@@ -8,3 +8,4 @@ staticfiles/
 
 .venv
 docs/
+.env.prod

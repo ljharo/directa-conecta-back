@@ -75,10 +75,18 @@ class HospitalAdmin(admin.ModelAdmin):
                 ctx['errores'] = ['El archivo no es un Excel válido (.xlsx).']
                 return render(request, 'admin/import_excel.html', ctx)
 
-            encabezado = [str(c.value).strip() if c.value else '' for c in ws[1]]
+            # Detectar fila de encabezados (puede estar en fila 1 o 2 si hay título)
+            COLS_CONOCIDAS = {'nombre', 'codigo', 'tipo', 'estado', 'ciudad'}
+            fila_enc = 1
+            for ri in range(1, 6):
+                vals = {str(c.value).strip().lower() for c in ws[ri] if c.value}
+                if vals & COLS_CONOCIDAS:
+                    fila_enc = ri
+                    break
+            encabezado = [str(c.value).strip() if c.value else '' for c in ws[fila_enc]]
             errores, creados = [], 0
 
-            for i, fila in enumerate(ws.iter_rows(min_row=2, values_only=True), start=2):
+            for i, fila in enumerate(ws.iter_rows(min_row=fila_enc + 1, values_only=True), start=fila_enc + 1):
                 if not any(fila):
                     continue
                 row = dict(zip(encabezado, fila))
