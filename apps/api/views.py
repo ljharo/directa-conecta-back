@@ -82,7 +82,7 @@ class BuscarPacienteView(APIView):
                 status_codes=['200'],
             ),
             OpenApiExample(
-                'Error — query muy corta',
+                'Error — q con solo 1 caracter',
                 value={'error': 'El parámetro "q" debe tener al menos 2 caracteres.'},
                 response_only=True,
                 status_codes=['400'],
@@ -98,27 +98,23 @@ class BuscarPacienteView(APIView):
     def get(self, request):
         q = request.query_params.get('q', '').strip()
 
-        if len(q) < 2:
+        if q and len(q) < 2:
             return Response(
                 {'error': 'El parámetro "q" debe tener al menos 2 caracteres.'},
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
-        filtro = (
-            Q(nombre_completo__icontains=q)
-            | Q(alias_o_apodos__icontains=q)
-            | Q(cedula__icontains=q)
-            | Q(id_caso__icontains=q)
-            | Q(hospital__nombre__icontains=q)
-            | Q(hospital__codigo__icontains=q)
-        )
+        qs = PersonaReportada.objects.select_related('hospital').order_by('-fecha_actualizacion')
 
-        qs = (
-            PersonaReportada.objects
-            .filter(filtro)
-            .select_related('hospital')
-            .order_by('-fecha_actualizacion')
-        )
+        if q:
+            qs = qs.filter(
+                Q(nombre_completo__icontains=q)
+                | Q(alias_o_apodos__icontains=q)
+                | Q(cedula__icontains=q)
+                | Q(id_caso__icontains=q)
+                | Q(hospital__nombre__icontains=q)
+                | Q(hospital__codigo__icontains=q)
+            )
 
         total = qs.count()
 
