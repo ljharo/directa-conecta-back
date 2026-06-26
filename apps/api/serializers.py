@@ -1,5 +1,6 @@
 from rest_framework import serializers
 from apps.personas.models import PersonaReportada
+from apps.centros.models import Edificio
 
 
 class PersonaReportadaSerializer(serializers.ModelSerializer):
@@ -58,3 +59,36 @@ class BusquedaResponseSerializer(serializers.Serializer):
     next        = serializers.URLField(allow_null=True)
     previous    = serializers.URLField(allow_null=True)
     results     = PersonaReportadaSerializer(many=True)
+
+
+class EdificioSerializer(serializers.ModelSerializer):
+    estado_estructural = serializers.SerializerMethodField()
+    estado             = serializers.SerializerMethodField()
+
+    class Meta:
+        model  = Edificio
+        fields = [
+            'id',
+            'nombre',
+            'estado',
+            'ciudad',
+            'direccion',
+            'estado_estructural',
+            'notas',
+            'fecha_registro',
+        ]
+
+    def get_estado_estructural(self, obj) -> str:
+        return obj.get_estado_estructural_display()
+
+    def get_estado(self, obj) -> str:
+        return obj.get_estado_display()
+
+
+class EdificiosResponseSerializer(serializers.Serializer):
+    count       = serializers.IntegerField()
+    page        = serializers.IntegerField()
+    total_pages = serializers.IntegerField()
+    next        = serializers.URLField(allow_null=True)
+    previous    = serializers.URLField(allow_null=True)
+    results     = EdificioSerializer(many=True)

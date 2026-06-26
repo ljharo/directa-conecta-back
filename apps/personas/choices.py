@@ -93,3 +93,11 @@ class FuenteInformacion(models.TextChoices):
     RED_SOCIAL_VERIFICADA = 'red_social_verificada', 'Red Social Verificada'
     REPORTE_FAMILIAR      = 'reporte_familiar',      'Reporte Familiar'
     OTRO                  = 'otro',                  'Otro'
+
+
+class EstadoEstructural(models.TextChoices):
+    DERRUMBADO          = 'derrumbado',          'Derrumbado'
+    PARCIALMENTE_DANADO = 'parcialmente_danado', 'Parcialmente dañado'
+    INTEGRIDAD_DELICADA = 'integridad_delicada', 'Integridad delicada'
+    EVACUADO            = 'evacuado',            'Evacuado'
+    EN_EVALUACION       = 'en_evaluacion',       'En evaluación'

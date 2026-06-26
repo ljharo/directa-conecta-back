@@ -7,7 +7,8 @@ from drf_spectacular.utils import extend_schema, OpenApiParameter, OpenApiExampl
 from drf_spectacular.types import OpenApiTypes
 
 from apps.personas.models import PersonaReportada
-from .serializers import PersonaReportadaSerializer, BusquedaResponseSerializer
+from apps.centros.models import Edificio
+from .serializers import PersonaReportadaSerializer, BusquedaResponseSerializer, EdificioSerializer, EdificiosResponseSerializer
 from .authentication import APIKeyAuthentication
 
 PAGE_SIZE = 10
@@ -133,6 +134,90 @@ class BuscarPacienteView(APIView):
         prev_url = f'{base_url}?q={q}&page={page - 1}' if page > 1 else None
 
         serializer = PersonaReportadaSerializer(pagina, many=True)
+        return Response({
+            'count':       total,
+            'page':        page,
+            'total_pages': total_pages,
+            'next':        next_url,
+            'previous':    prev_url,
+            'results':     serializer.data,
+        })
+
+
+class EdificiosView(APIView):
+    authentication_classes = [APIKeyAuthentication]
+
+    @extend_schema(
+        tags=['Edificios'],
+        summary='Listar edificios afectados',
+        description=(
+            'Devuelve el listado de edificios colapsados o con integridad estructural comprometida. '
+            'Opcionalmente filtra por estado estructural o busca por texto. '
+            'Resultados paginados de 10 en 10.'
+        ),
+        parameters=[
+            OpenApiParameter(
+                name='q',
+                type=OpenApiTypes.STR,
+                location=OpenApiParameter.QUERY,
+                required=False,
+                description='Búsqueda parcial por nombre, ciudad o dirección.',
+            ),
+            OpenApiParameter(
+                name='estado_estructural',
+                type=OpenApiTypes.STR,
+                location=OpenApiParameter.QUERY,
+                required=False,
+                description=(
+                    'Filtrar por estado estructural. Valores: '
+                    'derrumbado, parcialmente_danado, integridad_delicada, evacuado, en_evaluacion'
+                ),
+            ),
+            OpenApiParameter(
+                name='page',
+                type=OpenApiTypes.INT,
+                location=OpenApiParameter.QUERY,
+                required=False,
+                description='Número de página (default: 1).',
+            ),
+        ],
+        responses={200: EdificiosResponseSerializer, 401: OpenApiTypes.OBJECT},
+    )
+    def get(self, request):
+        q                 = request.query_params.get('q', '').strip()
+        filtro_estructural = request.query_params.get('estado_estructural', '').strip()
+
+        qs = Edificio.objects.order_by('-fecha_registro')
+
+        if q:
+            qs = qs.filter(
+                Q(nombre__icontains=q)
+                | Q(ciudad__icontains=q)
+                | Q(direccion__icontains=q)
+            )
+
+        if filtro_estructural:
+            qs = qs.filter(estado_estructural=filtro_estructural)
+
+        total = qs.count()
+
+        try:
+            page = max(1, int(request.query_params.get('page', 1)))
+        except (ValueError, TypeError):
+            page = 1
+
+        total_pages = max(1, math.ceil(total / PAGE_SIZE))
+        page        = min(page, total_pages)
+        offset      = (page - 1) * PAGE_SIZE
+        pagina      = qs[offset: offset + PAGE_SIZE]
+
+        base_url = request.build_absolute_uri(request.path)
+        qs_extra = f'&q={q}' if q else ''
+        qs_extra += f'&estado_estructural={filtro_estructural}' if filtro_estructural else ''
+        next_url = f'{base_url}?page={page + 1}{qs_extra}' if page < total_pages else None
+        prev_url = f'{base_url}?page={page - 1}{qs_extra}' if page > 1 else None
+
+        serializer = EdificioSerializer(pagina, many=True)
         return Response({
             'count':       total,
             'page':        page,

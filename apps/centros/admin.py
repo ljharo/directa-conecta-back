@@ -5,8 +5,8 @@ from django.contrib import messages
 import openpyxl
 from io import BytesIO
 from django.http import HttpResponse
-from .models import Hospital
-from apps.personas.choices import TipoCentro, EstadoVenezolano
+from .models import Hospital, Edificio
+from apps.personas.choices import TipoCentro, EstadoVenezolano, EstadoEstructural
 
 COLUMNAS_HOSPITAL = [
     {'nombre': 'nombre',               'requerido': True,  'ejemplo': 'Hospital Vargas'},
@@ -140,3 +140,41 @@ class HospitalAdmin(admin.ModelAdmin):
             ctx['errores'] = errores
 
         return render(request, 'admin/import_excel.html', ctx)
+
+
+_BADGE_ESTRUCTURAL = {
+    'derrumbado':          ('Derrumbado',          '#c0392b', '#fff'),
+    'parcialmente_danado': ('Parcialmente dañado',  '#e67e22', '#fff'),
+    'integridad_delicada': ('Integridad delicada',  '#e67e22', '#fff'),
+    'evacuado':            ('Evacuado',             '#f39c12', '#000'),
+    'en_evaluacion':       ('En evaluación',        '#7f8c8d', '#fff'),
+}
+
+
+@admin.register(Edificio)
+class EdificioAdmin(admin.ModelAdmin):
+    list_display    = ('nombre', 'estado', 'ciudad', 'badge_estructural', 'fecha_registro')
+    list_filter     = ('estado_estructural', 'estado')
+    search_fields   = ('nombre', 'ciudad', 'direccion')
+    readonly_fields = ('fecha_registro',)
+    fieldsets = (
+        (None, {
+            'fields': ('nombre', 'estado_estructural', 'estado', 'ciudad', 'direccion', 'notas'),
+        }),
+        ('Metadatos', {
+            'fields': ('fecha_registro',),
+            'classes': ('collapse',),
+        }),
+    )
+
+    @admin.display(description='Estado estructural', ordering='estado_estructural')
+    def badge_estructural(self, obj):
+        label, bg, fg = _BADGE_ESTRUCTURAL.get(
+            obj.estado_estructural, (obj.get_estado_estructural_display(), '#ccc', '#000')
+        )
+        from django.utils.html import format_html
+        return format_html(
+            '<span style="background:{};color:{};padding:2px 8px;'
+            'border-radius:4px;font-size:0.85em;font-weight:600">{}</span>',
+            bg, fg, label
+        )
