@@ -3,6 +3,7 @@ from django.db.models import Q, ProtectedError
 from rest_framework import viewsets, status
 from rest_framework.views import APIView
 from rest_framework.response import Response
+from rest_framework.pagination import PageNumberPagination
 from drf_spectacular.utils import (
     extend_schema,
     extend_schema_view,
@@ -25,6 +26,13 @@ from .serializers import (
 from .authentication import APIKeyAuthentication
 
 PAGE_SIZE = 10
+
+
+class StandardPagination(PageNumberPagination):
+    page_size = 20
+    page_size_query_param = "page_size"
+    max_page_size = 100
+    page_query_param = "page"
 
 
 # ---------------------------------------------------------------------------
@@ -170,6 +178,7 @@ class PersonaReportadaViewSet(viewsets.ModelViewSet):
     """CRUD completo para personas reportadas. Lookup por id_caso (ej: DC-00001)."""
 
     authentication_classes = [APIKeyAuthentication]
+    pagination_class = StandardPagination
     lookup_field = "id_caso"
     http_method_names = ["get", "post", "patch", "delete", "head", "options"]
 
@@ -249,6 +258,7 @@ class HospitalViewSet(viewsets.ModelViewSet):
     """CRUD completo para hospitales y centros de ayuda. Lookup por codigo (ej: HV)."""
 
     authentication_classes = [APIKeyAuthentication]
+    pagination_class = StandardPagination
     serializer_class = HospitalSerializer
     lookup_field = "codigo"
     http_method_names = ["get", "post", "patch", "delete", "head", "options"]
@@ -313,6 +323,7 @@ class EdificioViewSet(viewsets.ModelViewSet):
     """CRUD completo para edificios afectados. Lookup por id numérico."""
 
     authentication_classes = [APIKeyAuthentication]
+    pagination_class = StandardPagination
     http_method_names = ["get", "post", "patch", "delete", "head", "options"]
 
     def get_queryset(self):

@@ -59,7 +59,7 @@ class Command(BaseCommand):
                             else ""
                         ),
                         p.get_estado_actual_display(),
-                        str(p.hospital),
+                        str(p.hospital) if p.hospital_id else "",
                         p.fecha_actualizacion.strftime("%Y-%m-%d %H:%M"),
                     ]
                 )
